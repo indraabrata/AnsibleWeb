@@ -1,0 +1,39 @@
+{% extends "ansibleweb/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<!-- Counts Section -->
+<section class="dashboard-counts section-padding">
+  <div class="container fluid">
+    <div class="row d-flex align-items-md-stretch">
+     <div class="card">
+      <div class="wrapper d-flex">
+      <div class="media">
+      <img class="img-fluid rounded-circle account-img col-lg-3 col-md-4 col-6" src="{{ user.profile.image.url }}" class="fill" >
+      <div class="media-body">
+        <h2 class="account-heading">{{ user.username }}</h2>
+        <p class="text-secondary">{{ user.email }}</p>
+      </div>
+    </div>
+  </div>
+  <form method="POST" class="text-left" enctype="multipart/form-data">
+    {% csrf_token %}
+ <div class="card-body">
+    {{ u_form|crispy }}
+    {{ p_form|crispy }}
+ </div>
+  <div class="card-body text-center">
+  <button class="btn btn-outline-info" type="submit">Update</button>
+ </div>
+</form>
+    </div>
+  </div>
+  </div>
+</section>
+{% endblock content %}
+
+
+<!--{% for post in posts %}
+    <h1>{{ post.title }}</h1>
+    <p>By {{ post.author }} on {{ post.date_posted }}</p>
+    <p>{{ post.content }}</p>
+{% endfor %}-->

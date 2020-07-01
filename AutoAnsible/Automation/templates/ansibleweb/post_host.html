@@ -1,0 +1,130 @@
+{% extends "ansibleweb/base.html" %}
+{% block content %}
+    {% load crispy_forms_tags %}
+    <section class="dashboard-counts section-padding">
+        <div class="container fluid dashboard-content">
+            <div class="row">
+                <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+                  <div class="page-header">
+                    <h2 class="pageheader-title">Add Network Device</h2>
+                    <p class="pageheader-text">Add Group and Host of Network Device</p>
+                  </div>
+                </div>
+              </div>
+          <div class="row d-flex align-items-md-stretch">
+           <div class="card">
+             <ul class="nav nav-tabs">
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'group-create' %}">Group</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link active" href="{% url 'host-create' %}">Host</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href ="{% url 'port-device' %}">Info Port</a>
+                </li>
+              </ul>
+          <form method="POST" class="text-left">
+               {% csrf_token %}
+               <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>Host</label>
+                    </div>
+                    <div class="col-4">
+                        <div class="input-group">
+                            {{form.host}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>IP Address Host</label>
+                    </div>
+                    <div class="col-4">
+                        <div class="input-group">
+                            {{form.ansible_ssh_host}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>Username SSH</label>
+                    </div>
+                    <div class="col-4">
+                        <div class="input-group">
+                            {{form.ansible_user}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>Password SSH</label>
+                    </div>
+                    <div class="col-4">
+                        <div class="input-group">
+                            {{form.ansible_ssh_pass}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>Enable Password</label>
+                    </div>
+                    <div class="col-4">
+                        <div class="input-group">
+                            {{form.ansible_become_pass}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>Type Device</label>
+                    </div>
+                    <div class="col-4">
+                        <div class="input-group">
+                            {{form.device_type}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>Group</label>
+                    </div>
+                    <div class="col-4">
+                        <div class="input-group">
+                            {{form.group}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+
+             <div class="form-group text-center">
+             <button class="btn btn-outline-info" type="submit">Create</button>
+            </div>
+         </form>
+        </div>
+    </div>
+    </div>
+  </section>
+      {% endblock content %}

@@ -1,0 +1,57 @@
+{% extends "ansibleweb/base.html" %}
+{% block content %}
+    {% load crispy_forms_tags %}
+    <section class="dashboard-counts section-padding">
+        <div class="container fluid dashboard-content">
+            <div class="row">
+                <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+                  <div class="page-header">
+                    <h2 class="pageheader-title">Backup Configuration Cisco</h2>
+                    <p class="pageheader-text">Create task to backup configuration Cisco device</p>
+                  </div>
+                </div>
+              </div>
+          <div class="row d-flex align-items-md-stretch">
+            <div class="col-lg-8">
+           <div class="card">
+          <form method="POST" class="text-left">
+               {% csrf_token %}
+               <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>Select Type Device</label>
+                    </div>
+                    <div class="col-4">
+                        <div class="input-group">
+                            {{form_device.tipe}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>Select OS Device</label>
+                    </div>
+                    <div class="col-4">
+                        <div class="input-group">
+                            {{form_device.os}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+             <div class="form-group text-center">
+             <button class="btn btn-outline-info" type="submit">Create</button>
+            </div>
+         </form>
+        
+        
+        
+        </div>
+          </div>
+    </div>
+    </div>
+  </section>
+      {% endblock content %}

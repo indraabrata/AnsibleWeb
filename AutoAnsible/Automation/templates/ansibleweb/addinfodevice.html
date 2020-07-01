@@ -1,0 +1,86 @@
+{% extends "ansibleweb/base.html" %}
+{% block content %}
+    {% load crispy_forms_tags %}
+    <section class="dashboard-counts section-padding">
+        <div class="container fluid dashboard-content">
+            <div class="row">
+                <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+                  <div class="page-header">
+                    <h2 class="pageheader-title">Add Network Device</h2>
+                    <p class="pageheader-text">Add Group and Host of Network Device</p>
+                  </div>
+                </div>
+              </div>
+          <div class="row d-flex align-items-md-stretch">
+            <div class="col-lg-12">
+           <div class="card">
+             <ul class="nav nav-tabs">
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'group-create' %}">Group</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'host-create' %}">Host</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href ="{% url 'port-device' %}">Info Port</a>
+                </li>
+              </ul>
+          <form method="GET" class="text-left">
+               {% csrf_token %}
+               <div class="card-header">
+                <div class="row spacer">
+
+                    <div class="col-xl-2 col-lg-2 col-md-2 col-sm-2 col-2">
+                        <label>Choose Device</label>
+                    </div>
+                    <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-3">
+                        <div class="input-group">
+                            {{infos.hosts}}
+                        </div>
+                    </div>
+                    <div class="form-group text-center ">
+                        <div class="col-xl-4 col-lg-4 col-md-4 col-sm-3 col-4">
+                        <button class="btn btn-outline-info" type="submit" name="btnform1">Search</button>
+                    </div>
+                    </div>
+                </div>
+                <div class="row d-flex align-items-md-stretch">
+                    <div class="col-lg-12">
+                            <div class="d-flex align-items-center">
+                                <h4>Interface Information</h4>
+                            </div>
+                            <div class="card-body">
+                               <table class="table">
+                                   <tr>
+                                       <th>Port</th>
+                                       <th>Ip Address</th>
+                                       <th>Physical</th>
+                                       <th>Protocol</th>
+                                       <th>Pre Configuration</th>
+                                       <th>Status</th>
+                                   </tr>
+                                   {% for data in info %}
+                                        <tr>
+                                            <td>{{ data.port }}</td>
+                                            <td>{{ data.ipadd }}</td>
+                                            <td>{{ data.physical }}</td>
+                                            <td>{{ data.protocol }}</td>
+                                            <td>{{ data.preconf }}</td>
+                                            <td>{{ data.stats }}</td>
+                                        </tr> 
+                                    {% endfor %}
+                               </table>
+                            </div>
+                        </div></div>
+            </div>
+
+             <div class="form-group text-center">
+             <button class="btn btn-outline-info" type="submit" name="btnform2">Add Port</button>
+            </div>
+         </form>
+        </div>
+    </div>
+    </div>
+    </div>
+  </section>
+      {% endblock content %}

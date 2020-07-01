@@ -1,0 +1,25 @@
+{% extends "ansibleweb/base.html" %}
+{% block content %}
+    {% load crispy_forms_tags %}
+    <section class="dashboard-counts section-padding">
+        <div class="container fluid dashboard-content">
+            <div class="row">
+                <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+                  <div class="page-header">
+                    <h2 class="pageheader-title">Our Network</h2>
+                    <p class="pageheader-text"></p>
+                  </div>
+                </div>
+              </div>
+          <div class="row d-flex align-items-md-stretch">
+            <div class="col-lg-6">
+           <div class="card">
+               <button type="button" onclick="tampil()">Show Topology</button>
+            <div id="topologi" style="width:500px;height:500px"></div>
+        
+        </div>
+          </div>
+    </div>
+    </div>
+  </section>
+      {% endblock content %}

@@ -1,0 +1,85 @@
+{% extends "ansibleweb/base.html" %}
+{% block content %}
+<section class="dashboard-counts section-padding">
+    <div class="container fluid dashboard-content">
+        <div class="row">
+            <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+              <div class="page-header">
+                <h2 class="pageheader-title">Group Information</h2>
+                <p class="pageheader-text">Group and Device Information</p>
+              </div>
+            </div>
+          </div>
+          <div class="row d-flex align-items-md-stretch">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-header d-flex align-items-center">
+                        <h4>Group List</h4>
+                    </div>
+                    <div class="card-body">
+                       <table class="table">
+                           <tr>
+                               <th>Name Group</th>
+                               <th>Vendor</th>
+                               <th>Update</th>
+                               <th>Remove</th>
+                           </tr>
+                           {% for group in all_group %}
+                                <tr>
+                                    <td>{{ group.name }}</td>
+                                    <td>{{ group.ansible_network_os }}</td>
+                                    <td><a class="btn-sm btn-info" href="{% url 'update-group' group.id %}">Update</a></td>
+                                    <td><form action="{% url 'delete-group' group.id %}" method="post" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn-sm btn-danger"> Delete
+                                            </button>
+                                    </form>
+    
+                                    </td>
+                                </tr> 
+                            {% endfor %}
+                       </table>
+                    </div>
+                </div>
+                <div class="row d-flex align-items-md-stretch">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-header d-flex align-items-center">
+                                <h4>Device List</h4>
+                            </div>
+                            <div class="card-body">
+                            <table class="table">
+                                <tr>
+                                    <th>IP Address</th>
+                                    <th>Hostname</th>
+                                    <th>Device</th>
+                                    <th>Update</th>
+                                    <th>Port Info</th>
+                                    <th>Remove</th>
+                                </tr>
+                                {% for device in all_device %}
+                                        <tr>
+                                            <td>{{ device.ansible_ssh_host }}</td>
+                                            <td>{{ device.host }}</td>
+                                            <td>{{ device.device_type }}</td>
+                                            <td><a class="btn-sm btn-info" href="{% url 'update-device' device.id %}">Update</a></td>
+                                            <td><a class="btn-sm btn-info" href="{% url 'info-device' device.id %}">PORT</a></td>
+                                            <td><form action="{% url 'delete-device' device.id %}" method="post" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn-sm btn-danger"> Delete
+                                                    </button>
+                                            </form>
+
+                                            </td>
+                                        </tr> 
+                                    {% endfor %}
+                            </table>
+                            </div>
+                        </div>
+            
+        </div>
+      </div>
+    </div>
+</section>
+
+{% endblock content %}

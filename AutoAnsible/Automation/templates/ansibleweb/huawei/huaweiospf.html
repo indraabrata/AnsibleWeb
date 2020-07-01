@@ -1,0 +1,81 @@
+{% extends "ansibleweb/base.html" %}
+{% block content %}
+    {% load crispy_forms_tags %}
+    <section class="dashboard-counts section-padding">
+        <div class="container fluid dashboard-content">
+            <div class="row">
+                <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+                  <div class="page-header">
+                    <h2 class="pageheader-title">OSPF</h2>
+                    <p class="pageheader-text">Create OSPF on network device</p>
+                  </div>
+                </div>
+              </div>
+          <div class="row d-flex align-items-md-stretch">
+            <div class="col-lg-6">
+           <div class="card">
+          <form method="POST" class="text-left">
+               {% csrf_token %}
+               <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>Select Group</label>
+                    </div>
+                    <div class="col-4">
+                        <div class="input-group">
+                            {{ospf.hosts}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>Global Config</label>
+                    </div>
+                    <div class="col-4">
+                        <div class="input-group">
+                            {{ospf.area}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>Config ospf</label>
+                    </div>
+                    <div class="col-4">
+                        <div class="input-group">
+                            {{ospf.network}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+             <div class="form-group text-center">
+             <button class="btn btn-outline-info" type="submit">Create</button>
+            </div>
+         </form>
+        
+        
+        
+        </div>
+          </div>
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header d-flex align-items-center">
+                        <h4>Result Task</h4>
+                    </div>
+                    <div class="card-body">
+                        {{output}}
+                    </div>
+                </div>
+                
+            </div>
+    </div>
+    </div>
+  </section>
+      {% endblock content %}

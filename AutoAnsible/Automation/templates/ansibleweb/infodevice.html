@@ -1,0 +1,52 @@
+{% extends "ansibleweb/base.html" %}
+{% block content %}
+<section class="dashboard-counts section-padding">
+    <div class="container fluid dashboard-content">
+        <div class="row">
+            <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+              <div class="page-header">
+                <h2 class="pageheader-title">Interface Device Information</h2>
+                <p class="pageheader-text">Group and Device Information</p>
+              </div>
+            </div>
+          </div>
+          <div class="row d-flex align-items-md-stretch">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-header d-flex align-items-center">
+                        <h4>Group List</h4>
+                    </div>
+                    <div class="card-body">
+                       <table class="table">
+                           <tr>
+                               <th>Port</th>
+                               <th>Ip Address</th>
+                               <th>Physical</th>
+                               <th>Protocol</th>
+                               <th>Pre Configuration</th>
+                               <th>Status</th>
+                               <th>Add Device</th>
+                               <th>Book Config</th>
+                           </tr>
+                           {% for infos in info %}
+                                <tr>
+                                    <td>{{ infos.port }}</td>
+                                    <td>{{ infos.ipadd }}</td>
+                                    <td>{{ infos.physical }}</td>
+                                    <td>{{ infos.protocol }}</td>
+                                    <td>{{ infos.preconf }}</td>
+                                    <td>{{ infos.stats }}</td>
+                                    <td><a class="btn-sm btn-info" href="{% url 'prenewdevice' infos.id %}">Add Device</td>
+                                    <td><a class="btn-sm btn-info" href="{% url 'prekonfig' infos.id %}">Preconf</a></td>
+                                </tr> 
+                            {% endfor %}
+                       </table>
+                    </div>
+                </div></div></div>
+                
+    </div>
+    
+    
+</section>
+
+{% endblock content %}

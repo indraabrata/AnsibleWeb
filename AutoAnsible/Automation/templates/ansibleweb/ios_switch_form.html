@@ -1,0 +1,85 @@
+{% extends "ansibleweb/base.html" %}
+{% block content %}
+    {% load crispy_forms_tags %}
+    <section class="dashboard-counts section-padding">
+        <div class="container fluid dashboard-content">
+            <div class="row">
+                <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+                  <div class="page-header">
+                    <h2 class="pageheader-title">Configure Hostname</h2>
+                    <p class="pageheader-text">Create task to configure hostname device</p>
+                  </div>
+                </div>
+              </div>
+          <div class="row d-flex align-items-md-stretch">
+            <div class="col-lg-8">
+           <div class="card">
+          <form method="POST" class="text-left">
+               {% csrf_token %}
+               <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>Name File</label>
+                    </div>
+                    <div class="col-4">
+                        <div class="input-group">
+                            {{form_ios.name}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>MAC Address</label>
+                    </div>
+                    <div class="col-4">
+                        <div class="input-group">
+                            {{form_ios.mac}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>Vlan ID</label>
+                    </div>
+                    <div class="col-4">
+                        <div class="input-group">
+                            {{form_ios.vlan_id}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>Vlan Name</label>
+                    </div>
+                    <div class="col-4">
+                        <div class="input-group">
+                            {{form_ios.vlan_name}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+             <div class="form-group text-center">
+             <button class="btn btn-outline-info" type="submit">Create</button>
+            </div>
+         </form>
+        
+        
+        
+        </div>
+          </div>
+    </div>
+    </div>
+  </section>
+      {% endblock content %}

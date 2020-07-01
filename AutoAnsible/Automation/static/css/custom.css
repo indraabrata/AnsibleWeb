@@ -1,0 +1,9 @@
+/* your styles go here */
+
+.fill {
+    object-fit: fill;
+  }
+  
+.contain {
+    object-fit: contain;
+  }
