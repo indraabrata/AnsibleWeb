@@ -35,6 +35,8 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'crispy_forms',
     'dj_ansible',
+    'django_celery_results',
+    'django_celery_beat',
     'django_filters',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -132,3 +134,5 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 LOGIN_REDIRECT_URL = 'Ansible-home'
 LOGIN_URL = 'login'
 
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_CACHE_BACKEND = 'django-cache'

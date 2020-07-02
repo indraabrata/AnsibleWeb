@@ -12,6 +12,10 @@ from dj_ansible.models import AnsibleNetworkHost, AnsibleNetworkGroup
 from dj_ansible.ansible_kit import execute
 import json
 from datetime import datetime
+
+from __future__ import absolute_import, unicode_literals
+from celery import shared_task
+import time
 #from djansible.ansible_kit.executor import execute
 
 
