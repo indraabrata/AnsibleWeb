@@ -9,7 +9,7 @@ blessed==1.17.8
 celery==4.4.6
 cffi==1.14.0
 cryptography==2.8
-Django==3.0.4
+Django==3.0.7
 django-ansible==1.0.3
 django-celery-beat==2.0.0
 django-celery-results==1.2.1
