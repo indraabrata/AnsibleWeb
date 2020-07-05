@@ -1,19 +1,24 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
+import sys
+import django
 
 from celery import Celery
+from celery._state import _set_current_app
+from django.conf import settings
 
 # set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'helloworld.settings')
 
+django.setup()
 app = Celery('helloworld')
 
 # Using a string here means the worker doesn't have to serialize
 # the configuration object to child processes.
 # - namespace='CELERY' means all celery-related configuration keys
 #   should have a `CELERY_` prefix.
-app.config_from_object('django.conf:settings', namespace='CELERY')
+app.config_from_object('django.conf:settings')
 
 app.conf.beat_schedule = {
     'every-15-seconds':{

@@ -197,6 +197,26 @@ class ios_switch_form(forms.Form):
     vlan_id = forms.CharField()
     vlan_name = forms.CharField()
 
+class ce_switch(models.Model):
+    name = models.CharField(max_length=100, default="")
+    hostname = models.CharField(max_length=100, default="")
+    vlan = models.CharField(max_length=100, default="")
+    port_ip = models.CharField(max_length=100, default="")
+    port_vlan = models.CharField(max_length=100, default="")
+    port_cmd1 = models.CharField(max_length=100, default="")
+    port_id = models.ForeignKey(devices, on_delete=models.CASCADE)
+
+class ce_switch_form(forms.Form):
+    name = forms.CharField()
+    mac = forms.CharField()
+    vlan = forms.CharField()
+    port_ip = forms.CharField()
+    port_cmd1 = forms.CharField()
+    port_vlan = forms.CharField()
+
+
+
+
 
 
 
