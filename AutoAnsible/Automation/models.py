@@ -90,7 +90,6 @@ class addinfodevice(forms.Form):
 
 class ios_router(forms.Form):
     name = forms.CharField()
-    hostname = forms.CharField()
     mac = forms.CharField()
     port_ip = forms.CharField()
     port_cmd = forms.CharField()
@@ -213,6 +212,29 @@ class ce_switch_form(forms.Form):
     port_ip = forms.CharField()
     port_cmd1 = forms.CharField()
     port_vlan = forms.CharField()
+
+class routeros_router(models.Model):
+    name = models.CharField(max_length=100, default="")
+    hostname = models.CharField(max_length=100, default="")
+    port_cmd = models.CharField(max_length=100, default="")
+    ospf = models.CharField(max_length=100, default="")
+    inter_vlan = models.CharField(max_length=100, default="")
+    ip_add_vlan = models.CharField(max_length=100, default="")
+    port_id = models.ForeignKey(devices, on_delete=models.CASCADE)
+
+class routeros_router_form(forms.Form):
+    name = forms.CharField()
+    mac =  forms.CharField()
+    port_ip = forms.CharField()
+    port_cmd = forms.CharField()
+    ospf_network = forms.CharField()
+    ospf_area = forms.CharField()
+    vlan_name = forms.CharField()
+    vlan_id = forms.CharField()
+    vlan_int = forms.CharField()
+    ip_add_vlan = forms.CharField()
+    interface_vlan = forms.CharField()
+
 
 
 

@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from users.forms import UserRegisterForm
 from django.contrib.auth.decorators import login_required
-from .models import PostInventoryGroup, PostInventoryHost ,PostPlayBookForm, TaskForm, log, group, addinfodevice , ios_router, preconfdevice, arp, ce_router_form, ce_router, kamusport, ios_switch, ios_switch_form, devices, iosrouter, ce_switch, ce_switch_form
+from .models import PostInventoryGroup, PostInventoryHost ,PostPlayBookForm, TaskForm, log, group, addinfodevice , ios_router, preconfdevice, arp, ce_router_form, ce_router, kamusport, ios_switch, ios_switch_form, devices, iosrouter, ce_switch, ce_switch_form, routeros_router, routeros_router_form
 from .forms import hostnamecisco, vlan_cisco, ospf_cisco, ciscobackup, ciscorestore, hostnamehuawei, ospf_huawei, intervlan_huawei, huaweibackup, hostnamemikrotik, ipaddmikrotik, ospf_mikrotik, mikrotikbackup, huaweirestore, mikrotikrestore, autoconfig
 from django.contrib import messages
 from django.db.models.fields.related import ManyToManyField
@@ -152,11 +152,11 @@ def prekonfig(request, pk):
                                     dhcp_network='network '+data['dhcp_network'],
                                     default_router ='default-router '+data['default_router'],
                                     dns_server='dns-server '+data['dns_server'],
-                                    dhcp_pool='ip dhcp pool'+data['dhcp_pool'],
+                                    dhcp_pool='ip dhcp pool '+data['dhcp_pool'],
                                     port_id=select)
                     coba.save()
                     idd = select.id
-                    devices.objects.filter(id=idd).update(preconf=data['hostname'] ,new_device_mac=data['mac'] ,stats='Booked')
+                    devices.objects.filter(id=idd).update(preconf=data['name'] ,new_device_mac=data['mac'] ,stats='Booked')
                     messages.success(request, f'Successfully create PreConfiguration!')
                     return redirect('/')
             else:
@@ -186,9 +186,9 @@ def prekonfig(request, pk):
                                                                     dhcp_network='network '+data['dhcp_network'],
                                                                     default_router ='default-router '+data['default_router'],
                                                                     dns_server='dns-server '+data['dns_server'],
-                                                                    dhcp_pool='ip dhcp pool'+data['dhcp_pool'])
-                    update = select.id
-                    devices.objects.filter(id=update).update(preconf=data['hostname'], new_device_mac=data['mac'])
+                                                                    dhcp_pool='ip dhcp pool '+data['dhcp_pool'])
+                    idd = select.id
+                    devices.objects.filter(id=idd).update(preconf=data['name'], new_device_mac=data['mac'])
                     messages.success(request, f'Successfully update PreConfiguration!')
                     return redirect('/')
             else:
@@ -221,7 +221,27 @@ def prekonfig(request, pk):
                 'form_ios': form_ios
             }
             return render(request, 'ansibleweb/ios_switch_form.html', context)
+        else:
+            if request.method == 'POST':
+                form_ios = ios_switch_form(request.POST)
+                if form_ios.is_valid():
+                    data = request.POST
+                    print(request.POST)
+                    ios_switch.objects.filter(port_id=select).update(name=data['name'],
+                                    hostname='sysname '+data['name'],
+                                    vlan_id=data['vlan_id'],
+                                    vlan_name=data['vlan_name'])
+                    idd = select.id
+                    devices.objects.filter(id=idd).update(preconf=data['name'], new_device_mac=data['mac'])
+                    messages.success(request, f'Successfully update PreConfiguration!')
+                    return redirect('/')
+            else:
+                form_ios = ios_switch_form()
 
+            context = {
+                'form_ios': form_ios
+            }
+            return render(request, 'ansibleweb/ios_switch_form.html', context)
     elif cek == 'ce' and tipe == 'router':
         if state == 'empty':
             if request.method == 'POST':
@@ -336,6 +356,53 @@ def prekonfig(request, pk):
                 'form_ce': form_ce
             }
             return render(request, 'ansibleweb/huawei/ce_switch_preconfig.html', context)
+    elif cek == 'routeros' and tipe == 'router':
+        if state == 'empty':
+            if request.method == 'POST':
+                form_routeros = routeros_router_form(request.POST)
+                if form_routeros.is_valid():
+                    data = request.POST
+                    print(request.POST)
+                    coba = routeros_router(name=data['name'],
+                                        hostname='/system identity set name='+data['name'],
+                                        port_cmd='/ip address add address='+data['port_cmd']+' interface='+data['port_ip'],
+                                        opsf='/routing ospf network add network='+data['ospf_network']+' area='+data['ospf_area'],
+                                        inter_vlan='/interface vlan add name='+data['vlan_name']+' vlan-id='+data['vlan_id']+' interface='+data['vlan_int'],
+                                        ip_add_vlan='/ip address add address='+data['ip_add_vlan']+' interface='+data['interface_vlan'],
+                                        port_id=select)
+                    coba.save()
+                    idd = select.id
+                    devices.objects.filter(id=idd).update(preconf=data['name'] ,new_device_mac=data['mac'] ,stats='Booked')
+                    messages.success(request, f'Successfully create PreConfiguration!')
+                    return redirect('/')
+            else:
+                form_routeros = routeros_router_form()
+            context= {
+                'form_routeros': form_routeros
+            }
+            return render(request, 'ansibleweb/mikrotik/routeros_router_form.html', context)
+        else:
+            if request.method == 'POST':
+                form_routeros = routeros_router_form(request.POST)
+                if form_routeros.is_valid():
+                    data = request.POST
+                    print(request.POST)
+                    routeros_router.objects.filter(port_id=select).update(name=data['name'],
+                                        hostname='/system identity set name='+data['name'],
+                                        port_cmd='/ip address add address='+data['port_cmd']+' interface='+data['port_ip'],
+                                        opsf='/routing ospf network add network='+data['ospf_network']+' area='+data['ospf_area'],
+                                        inter_vlan='/interface vlan add name='+data['vlan_name']+' vlan-id='+data['vlan_id']+' interface='+data['vlan_int'],
+                                        ip_add_vlan='/ip address add address='+data['ip_add_vlan']+' interface='+data['interface_vlan'])
+                    update = select.id
+                    devices.objects.filter(id=update).update(preconf=data['name'], new_device_mac=data['mac'])
+                    messages.success(request, f'Successfully update PreConfiguration!')
+                    return redirect('/')
+            else:
+                form_routeros = routeros_router_form()
+            context={
+                'form_routeros': form_routeros
+            }
+            return render(request, 'ansibleweb/mikrotik/routeros_router_form.html', context)
     else:
         return redirect('/')
     
@@ -1203,6 +1270,39 @@ def autoconf(device):
                                     print("Berhasil AutoConfig!!")
                                 else:
                                     print("Cek Koneksi Perangkat!!")
+                            elif t_os == 'routeros' and dtype == 'router' and matching > 0:
+                                savehost = AnsibleNetworkHost(host=cons,
+                                                        ansible_ssh_host=add_ip,
+                                                        ansible_user='mikrotik',
+                                                        ansible_ssh_pass='54541691',
+                                                        ansible_become_pass='54541691',
+                                                        device_type=de_type,
+                                                        group=host.group)
+                                savehost.save()
+                                conf = routeros_router.objects.get(name=cons)
+                                my_play = dict(
+                                        name="hostname",
+                                        hosts=cons,
+                                        become='yes',
+                                        become_method='enable',
+                                        gather_facts='no',
+                                        vars=[
+                                            dict(ansible_command_timeout=120)
+                                        ],
+                                        tasks=[
+                                            dict(action=dict(module='routeros_command', commands=conf.hostname)),
+                                            dict(action=dict(module='routeros_command', commands=conf.ospf)),
+                                            dict(action=dict(module='routeros_command', commands=conf.inter_vlan)),
+                                            dict(action=dict(module='routeros_coomand', commands=conf.ip_add_vlan))
+                                            ]
+                                    )
+                                result = execute(my_play)
+                                kondisi = result.stats
+                                kond = kondisi['hosts'][0]['status']
+                                if kond == 'ok':
+                                    devices.objects.filter(new_device_mac=findmac).update(stats='configured')
+                                else:
+                                    print("Cek Koneksi Perangkat!!")
         elif os == 'ce':
             arp.objects.filter(device_id=device).delete()
             my_play = dict(
@@ -1397,7 +1497,266 @@ def autoconf(device):
                                 devices.objects.filter(new_device_mac=findmac).update(stats='configured')
                             else:
                                 print("Cek Koneksi Perangkat!!")
-                                
+                        elif t_os == 'routeros' and dtype == 'router' and matching > 0:
+                            savehost = AnsibleNetworkHost(host=cons,
+                                                    ansible_ssh_host=add_ip,
+                                                    ansible_user='mikrotik',
+                                                    ansible_ssh_pass='54541691',
+                                                    ansible_become_pass='54541691',
+                                                    device_type=de_type,
+                                                    group=host.group)
+                            savehost.save()
+                            conf = routeros_router.objects.get(name=cons)
+                            my_play = dict(
+                                    name="hostname",
+                                    hosts=cons,
+                                    become='yes',
+                                    become_method='enable',
+                                    gather_facts='no',
+                                    vars=[
+                                        dict(ansible_command_timeout=120)
+                                    ],
+                                    tasks=[
+                                        dict(action=dict(module='routeros_command', commands=conf.hostname)),
+                                        dict(action=dict(module='routeros_command', commands=conf.ospf)),
+                                        dict(action=dict(module='routeros_command', commands=conf.inter_vlan)),
+                                        dict(action=dict(module='routeros_coomand', commands=conf.ip_add_vlan))
+                                        ]
+                                )
+                            result = execute(my_play)
+                            kondisi = result.stats
+                            kond = kondisi['hosts'][0]['status']
+                            if kond == 'ok':
+                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
+                            else:
+                                print("Cek Koneksi Perangkat!!")
+        elif os == 'routeros':
+            arp.objects.filter(device_id=device).delete()
+            my_play = dict(name="show arp",
+                            host=host.host,
+                            become='yes',
+                            become_method='enable',
+                            gather_facts='no',
+                            vars=[
+                                dict(ansible_command_timeout=120)
+                            ],
+                            tasks=[
+                                dict(action=dict(module='routeros_command', commands='/ip arp print'))
+                                ]
+                            )
+            result = execute(my_play)
+            print(my_play)
+            condition = result.stats
+            print(condition)
+            con = condition['hosts'][0]['status']
+            print(con)
+            if con == 'ok':
+                output = result.results
+                dataport = output['success'][0]['tasks'][0]['result']['stdout_lines'][0][3:]
+                maks = len(dataport)
+                for x in range(0, maks):
+                    ip = dataport[x][6:22].replace(" ","")
+                    mac = dataport[x][22:40].replace(" ","")
+                    portt = dataport[x][40:].replace(" ","")
+                    coba = arp(ipadd=ip,
+                                mac=mac,
+                                port=portt,
+                                device_id=host)
+                    coba.save()
+                    bookeds = devices.objects.filter(device_id=device, stats='Booked').values_list('new_device_mac')
+                arps = arp.objects.filter(device_id=device).values_list('mac')
+                match = arps.intersection(bookeds)
+                print(bookeds)
+                print(arps)
+                print(match)
+                jumlah = len(match)
+                if jumlah > 0:
+                    ulang = False
+                    for z in range(0, jumlah):
+                        findmac = match[z][0]
+                        print(findmac)
+                        getportarp = arp.objects.filter(device_id=device, mac=findmac).values_list('port')
+                        cekkamus = kamusport.objects.get(portarp=getportarp)
+                        port_out = cekkamus.portint
+                        cekking = devices.objects.filter(device_id=device, stats='Booked', new_device_mac=findmac, port=port_out)
+                        matching = len(cekking)
+                        os_type = devices.objects.filter(new_device_mac=findmac).values_list('new_device_os')
+                        t_os = os_type[0][0]
+                        de_type = devices.objects.filter(new_device_mac=findmac).values_list('new_device_type')
+                        dtype = de_type[0][0]
+                        add_ip = arp.objects.filter(mac=findmac).values_list('ipadd')
+                        precon = devices.objects.filter(new_device_mac=findmac).values_list('preconf')
+                        cons = precon[0][0]
+                        print(cons)
+                        print(t_os)
+                        if t_os == 'ios' and dtype == 'router' and matching > 0:
+                            savehost = AnsibleNetworkHost(host=cons,
+                                                ansible_ssh_host=add_ip,
+                                                ansible_user='indra',
+                                                ansible_ssh_pass='cisco',
+                                                ansible_become_pass='cisco',
+                                                device_type=de_type,
+                                                group=host.group)
+                            savehost.save()
+                            conf = iosrouter.objects.get(name=cons)
+                            my_play = dict(
+                                    name="hostname",
+                                    hosts=cons,
+                                    become='yes',
+                                    become_method='enable',
+                                    gather_facts='no',
+                                    vars=[
+                                        dict(ansible_command_timeout=120)
+                                    ],
+                                    tasks=[
+                                        dict(action=dict(module='ios_config', commands=conf.hostname)),
+                                        dict(action=dict(module='ios_config', commands=conf.port_cmd, parents=conf.port_ip)),
+                                        dict(action=dict(module='ios_config', commands=conf.ospf_network+" area "+conf.ospf_area, parents=conf.ospf))
+                                        ]
+                                    )
+                            result = execute(my_play)
+                            kondisi = result.stats
+                            kond = kondisi['hosts'][0]['status']
+                            if kond == 'ok':
+                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
+                            else:
+                                print("Cek Koneksi Perangkat!!")
+                        elif t_os == 'ce' and dtype == 'router' and matching > 0:
+                            savehost = AnsibleNetworkHost(host=cons,
+                                                ansible_ssh_host=add_ip,
+                                                ansible_user='admin',
+                                                ansible_ssh_pass='54541691',
+                                                ansible_become_pass='54541691',
+                                                device_type=de_type,
+                                                group=host.group)
+                            savehost.save()
+                            print(host)
+                            conf = ce_router.objects.get(name=cons)
+                            my_play = dict(
+                                    name="hostname",
+                                    hosts=cons,
+                                    become='yes',
+                                    become_method='enable',
+                                    gather_facts='no',
+                                    vars=[
+                                        dict(ansible_command_timeout=120)
+                                    ],
+                                    tasks=[
+                                        dict(action=dict(module='ce_config', commands=conf.hostname)),
+                                        dict(action=dict(module='ce_config', lines=[conf.ospf, conf.ospf_area, conf.ospf_network]))
+                                        ]
+                                    )
+                            result = execute(my_play)
+                            print(conf.name)
+                            print(result.results)
+                            kondisi = result.stats
+                            kond = kondisi['hosts'][0]['status']
+                            if kond == 'ok':
+                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
+                                print("Berhasil AutoConfig!!")
+                            else:
+                                print("Cek Koneksi Perangkat!!")
+                        elif t_os == 'ce' and dtype == 'switch' and matching > 0:
+                            savehost = AnsibleNetworkHost(host=cons,
+                                                ansible_ssh_host=add_ip,
+                                                ansible_user='admin',
+                                                ansible_ssh_pass='54541691',
+                                                ansible_become_pass='54541691',
+                                                device_type=de_type,
+                                                group=host.group)
+                            savehost.save()
+                            print(host)
+                            conf = ce_switch.objects.get(name=cons)
+                            my_play = dict(
+                                    name="hostname",
+                                    hosts=cons,
+                                    become='yes',
+                                    become_method='enable',
+                                    gather_facts='no',
+                                    vars=[
+                                        dict(ansible_command_timeout=120)
+                                    ],
+                                    tasks=[
+                                        dict(action=dict(module='ce_config', commands=conf.hostname)),
+                                        dict(action=dict(module='ce_config', commands=conf.vlan)),
+                                        dict(action=dict(module='ce_config', lines=[conf.port_ip, conf.port_cmd1, conf.port_vlan]))
+                                        ]
+                                    )
+                            result = execute(my_play)
+                            print(conf.name)
+                            print(result.results)
+                            kondisi = result.stats
+                            kond = kondisi['hosts'][0]['status']
+                            if kond == 'ok':
+                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
+                                print("Berhasil AutoConfig!!")
+                            else:
+                                print("Cek Koneksi Perangkat!!")
+                        elif t_os == 'ios' and dtype == 'switch' and matching > 0:
+                            savehost = AnsibleNetworkHost(host=cons,
+                                                    ansible_ssh_host=add_ip,
+                                                    ansible_user='indra',
+                                                    ansible_ssh_pass='cisco',
+                                                    ansible_become_pass='cisco',
+                                                    device_type=de_type,
+                                                    group=host.group)
+                            savehost.save()
+                            conf = ios_switch.objects.get(name=cons)
+                            my_play = dict(
+                                    name="hostname",
+                                    hosts=cons,
+                                    become='yes',
+                                    become_method='enable',
+                                    gather_facts='no',
+                                    vars=[
+                                        dict(ansible_command_timeout=120)
+                                    ],
+                                    tasks=[
+                                        dict(action=dict(module='ios_config', commands=conf.hostname)),
+                                        dict(action=dict(module='ios_vlan', vlan_id=conf.vlan_id, name=conf.vlan_name))
+                                    ]
+                                )
+                            result = execute(my_play)
+                            kondisi = result.stats
+                            kond = kondisi['hosts'][0]['status']
+                            if kond == 'ok':
+                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
+                            else:
+                                print("Cek Koneksi Perangkat!!")
+                        elif t_os == 'routeros' and dtype == 'router' and matching > 0:
+                            savehost = AnsibleNetworkHost(host=cons,
+                                                    ansible_ssh_host=add_ip,
+                                                    ansible_user='mikrotik',
+                                                    ansible_ssh_pass='54541691',
+                                                    ansible_become_pass='54541691',
+                                                    device_type=de_type,
+                                                    group=host.group)
+                            savehost.save()
+                            conf = routeros_router.objects.get(name=cons)
+                            my_play = dict(
+                                    name="hostname",
+                                    hosts=cons,
+                                    become='yes',
+                                    become_method='enable',
+                                    gather_facts='no',
+                                    vars=[
+                                        dict(ansible_command_timeout=120)
+                                    ],
+                                    tasks=[
+                                        dict(action=dict(module='routeros_command', commands=conf.hostname)),
+                                        dict(action=dict(module='routeros_command', commands=conf.ospf)),
+                                        dict(action=dict(module='routeros_command', commands=conf.inter_vlan)),
+                                        dict(action=dict(module='routeros_coomand', commands=conf.ip_add_vlan))
+                                        ]
+                                )
+                            result = execute(my_play)
+                            kondisi = result.stats
+                            kond = kondisi['hosts'][0]['status']
+                            if kond == 'ok':
+                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
+                            else:
+                                print("Cek Koneksi Perangkat!!")
+
 
 
 def about(request):
