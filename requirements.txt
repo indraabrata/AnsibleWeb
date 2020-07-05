@@ -16,7 +16,7 @@ Jinja2==2.10
 keyring==10.6.0
 keyrings.alt==3.0
 MarkupSafe==1.0
-paramiko==2.0.0
+paramiko==2.0.9
 pathlib2==2.3.5
 pbr==5.4.5
 pyasn1==0.4.2
