@@ -68,14 +68,15 @@ class TaskForm(ModelForm):
         }
 
 class log(models.Model):
-    target = models.CharField(max_length=255)
-    action = models.CharField(max_length=255)
-    status = models.CharField(max_length=255)
-    time = models.CharField(max_length=255)
-    messages = models.CharField(max_length=255)
+    account = models.CharField(max_length=255, default="")
+    targetss = models.CharField(max_length=255, default="")
+    action = models.CharField(max_length=255, default="")
+    status = models.CharField(max_length=255, default="")
+    time = models.CharField(max_length=255, default="")
+    messages = models.CharField(max_length=255, default="")
 
     def __str__(self):
-        return "{} - {} - {}".format(self.target, self.action, self.status)
+        return "{} - {} - {}".format(self.targetss, self.action, self.status)
 
 class c_hostname(models.Model):
     name = models.CharField(max_length=255)

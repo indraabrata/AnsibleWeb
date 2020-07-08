@@ -18,6 +18,8 @@ from celery import shared_task
 import time
 from asgiref.sync import sync_to_async
 import threading
+from django.contrib.auth.models import User
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 #from djansible.ansible_kit.executor import execute
 
 
@@ -42,8 +44,20 @@ posts = [
 @login_required
 def home(request):
     all_device = AnsibleNetworkHost.objects.all()
+    logs = log.objects.all()
+    coba = request.GET.get('page', 1)
+
+    paginator = Paginator(logs, 10)
+    try:
+        pages = paginator.page(coba)
+    except PageNotAnInteger:
+        pages = paginator.page(1)
+    except EmptyPage:
+        pages = paginator.page(paginator.num_pages)
+
     context = {
-        'all_device': len(all_device)
+        'all_device': len(all_device),
+        'pages': pages
     }
     return render(request, 'ansibleweb/home.html', context)
 
@@ -1061,13 +1075,16 @@ def arpconfig(request):
                         messages.warning(request, f'Check Connection to Remote Host!')
                         return redirect('arp')
     elif request.method == 'GET' and 'btnform2' in request.GET:
-        form = autoconfig(request.GET)
+        form = autoconfig(request.GET, instance=request.user)
         if form.is_valid():
             data = request.GET
+            akun = request.user
             print(request.GET)
             device = data['hosts']
-            t1 = threading.Thread(target=autoconf, args=[device])
+            t1 = threading.Thread(target=autoconf, args=[device, akun])
             t1.start()
+            logs = log(account=akun, targetss=data['hosts'], action="Auto Configuration", status="PENDING", time=datetime.now(), messages="No Error")
+            logs.save()
             messages.success(request, f'Starting AutoConfiguration!')
             context = {
                 'form': form
@@ -1082,7 +1099,7 @@ def arpconfig(request):
     return render(request, 'ansibleweb/autoconfig.html', context)
 
 
-def autoconf(device):
+def autoconf(device, akun):
     print("Starting AutoConfiguration")
     time.sleep(10)
     host = AnsibleNetworkHost.objects.get(id=device)
@@ -1120,189 +1137,208 @@ def autoconf(device):
                                 port=portt,
                                 device_id=host)
                     coba.save()
-                    bookeds = devices.objects.filter(device_id=device, stats='Booked').values_list('new_device_mac')
-                    arps = arp.objects.filter(device_id=device).values_list('mac')
-                    match = arps.intersection(bookeds)
-                    jumlah = len(match)
-                    if jumlah > 0:
-                        ulang = False
-                        for z in range(0, jumlah):
-                            findmac = match[z][0]
-                            getportarp = arp.objects.filter(device_id=device, mac=findmac).values_list('port')
-                            cekkamus = kamusport.objects.get(portarp=getportarp)
-                            port_out = cekkamus.portint
-                            cekking = devices.objects.filter(device_id=device, stats='Booked', new_device_mac=findmac, port=port_out)
-                            matching = len(cekking)
-                            os_type = devices.objects.filter(new_device_mac=findmac).values_list('new_device_os')
-                            t_os = os_type[0][0]
-                            de_type = devices.objects.filter(new_device_mac=findmac).values_list('new_device_type')
-                            dtype = de_type[0][0]
-                            add_ip = arp.objects.filter(mac=findmac).values_list('ipadd')
-                            precon = devices.objects.filter(new_device_mac=findmac).values_list('preconf')
-                            cons = precon[0][0]
-                            if t_os == 'ios' and dtype == 'router' and matching > 0:
-                                savehost = AnsibleNetworkHost(host=cons,
+                bookeds = devices.objects.filter(device_id=device, stats='Booked').values_list('new_device_mac')
+                arps = arp.objects.filter(device_id=device).values_list('mac')
+                match = arps.intersection(bookeds)
+                jumlah = len(match)
+                if jumlah > 0:
+                    ulang = False
+                    for z in range(0, jumlah):
+                        findmac = match[z][0]
+                        getportarp = arp.objects.filter(device_id=device, mac=findmac).values_list('port')
+                        cekkamus = kamusport.objects.get(portarp=getportarp)
+                        port_out = cekkamus.portint
+                        cekking = devices.objects.filter(device_id=device, stats='Booked', new_device_mac=findmac, port=port_out)
+                        matching = len(cekking)
+                        os_type = devices.objects.filter(new_device_mac=findmac).values_list('new_device_os')
+                        t_os = os_type[0][0]
+                        de_type = devices.objects.filter(new_device_mac=findmac).values_list('new_device_type')
+                        dtype = de_type[0][0]
+                        add_ip = arp.objects.filter(mac=findmac).values_list('ipadd')
+                        precon = devices.objects.filter(new_device_mac=findmac).values_list('preconf')
+                        cons = precon[0][0]
+                        if t_os == 'ios' and dtype == 'router' and matching > 0:
+                            savehost = AnsibleNetworkHost(host=cons,
+                                                ansible_ssh_host=add_ip,
+                                                ansible_user='indra',
+                                                ansible_ssh_pass='cisco',
+                                                ansible_become_pass='cisco',
+                                                device_type=de_type,
+                                                group=host.group)
+                            savehost.save()
+                            conf = iosrouter.objects.get(name=cons)
+                            my_play = dict(
+                                    name="hostname",
+                                    hosts=cons,
+                                    become='yes',
+                                    become_method='enable',
+                                    gather_facts='no',
+                                    vars=[
+                                        dict(ansible_command_timeout=120)
+                                    ],
+                                    tasks=[
+                                        dict(action=dict(module='ios_config', commands=conf.hostname)),
+                                        dict(action=dict(module='ios_config', commands=conf.port_cmd, parents=conf.port_ip)),
+                                        dict(action=dict(module='ios_config', commands=conf.ospf_network+" area "+conf.ospf_area, parents=conf.ospf))
+                                        ]
+                                    )
+                            result = execute(my_play)
+                            kondisi = result.stats
+                            kond = kondisi['hosts'][0]['status']
+                            if kond == 'ok':
+                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                            else:
+                                fail = result.results
+                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                print(f'{err}')
+                        elif t_os == 'ios' and dtype == 'switch' and matching > 0:
+                            savehost = AnsibleNetworkHost(host=cons,
                                                     ansible_ssh_host=add_ip,
                                                     ansible_user='indra',
                                                     ansible_ssh_pass='cisco',
                                                     ansible_become_pass='cisco',
                                                     device_type=de_type,
                                                     group=host.group)
-                                savehost.save()
-                                conf = iosrouter.objects.get(name=cons)
-                                my_play = dict(
-                                        name="hostname",
-                                        hosts=cons,
-                                        become='yes',
-                                        become_method='enable',
-                                        gather_facts='no',
-                                        vars=[
-                                            dict(ansible_command_timeout=120)
-                                        ],
-                                        tasks=[
-                                            dict(action=dict(module='ios_config', commands=conf.hostname)),
-                                            dict(action=dict(module='ios_config', commands=conf.port_cmd, parents=conf.port_ip)),
-                                            dict(action=dict(module='ios_config', commands=conf.ospf_network+" area "+conf.ospf_area, parents=conf.ospf))
-                                            ]
-                                        )
-                                result = execute(my_play)
-                                kondisi = result.stats
-                                kond = kondisi['hosts'][0]['status']
-                                if kond == 'ok':
-                                    devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                else:
-                                    print("Cek Koneksi Perangkat!!")
-                            elif t_os == 'ios' and dtype == 'switch' and matching > 0:
-                                savehost = AnsibleNetworkHost(host=cons,
-                                                        ansible_ssh_host=add_ip,
-                                                        ansible_user='indra',
-                                                        ansible_ssh_pass='cisco',
-                                                        ansible_become_pass='cisco',
-                                                        device_type=de_type,
-                                                        group=host.group)
-                                savehost.save()
-                                conf = ios_switch.objects.get(name=cons)
-                                my_play = dict(
-                                        name="hostname",
-                                        hosts=cons,
-                                        become='yes',
-                                        become_method='enable',
-                                        gather_facts='no',
-                                        vars=[
-                                            dict(ansible_command_timeout=120)
-                                        ],
-                                        tasks=[
-                                            dict(action=dict(module='ios_config', commands=conf.hostname)),
-                                            dict(action=dict(module='ios_vlan', vlan_id=conf.vlan_id, name=conf.vlan_name))
+                            savehost.save()
+                            conf = ios_switch.objects.get(name=cons)
+                            my_play = dict(
+                                    name="hostname",
+                                    hosts=cons,
+                                    become='yes',
+                                    become_method='enable',
+                                    gather_facts='no',
+                                    vars=[
+                                        dict(ansible_command_timeout=120)
+                                    ],
+                                    tasks=[
+                                        dict(action=dict(module='ios_config', commands=conf.hostname)),
+                                        dict(action=dict(module='ios_vlan', vlan_id=conf.vlan_id, name=conf.vlan_name))
+                                    ]
+                                )
+                            result = execute(my_play)
+                            kondisi = result.stats
+                            kond = kondisi['hosts'][0]['status']
+                            if kond == 'ok':
+                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                            else:
+                                fail = result.results
+                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                print(f'{err}')
+                        elif t_os == 'ce' and dtype == 'router' and matching > 0:
+                            savehost = AnsibleNetworkHost(host=cons,
+                                                ansible_ssh_host=add_ip,
+                                                ansible_user='admin',
+                                                ansible_ssh_pass='54541691',
+                                                ansible_become_pass='54541691',
+                                                device_type=de_type,
+                                                group=host.group)
+                            savehost.save()
+                            conf = ce_router.objects.get(name=cons)
+                            my_play = dict(
+                                    name="hostname",
+                                    hosts=cons,
+                                    become='yes',
+                                    become_method='enable',
+                                    gather_facts='no',
+                                    vars=[
+                                        dict(ansible_command_timeout=120)
+                                    ],
+                                    tasks=[
+                                        dict(action=dict(module='ce_config', commands=conf.hostname)),
+                                        dict(action=dict(module='ce_config', lines=[conf.ospf, conf.ospf_area, conf.ospf_network]))
                                         ]
                                     )
-                                result = execute(my_play)
-                                kondisi = result.stats
-                                kond = kondisi['hosts'][0]['status']
-                                if kond == 'ok':
-                                    devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                else:
-                                    print("Cek Koneksi Perangkat!!")
-                            elif t_os == 'ce' and dtype == 'router' and matching > 0:
-                                savehost = AnsibleNetworkHost(host=cons,
-                                                    ansible_ssh_host=add_ip,
-                                                    ansible_user='admin',
-                                                    ansible_ssh_pass='54541691',
-                                                    ansible_become_pass='54541691',
-                                                    device_type=de_type,
-                                                    group=host.group)
-                                savehost.save()
-                                conf = ce_router.objects.get(name=cons)
-                                my_play = dict(
-                                        name="hostname",
-                                        hosts=cons,
-                                        become='yes',
-                                        become_method='enable',
-                                        gather_facts='no',
-                                        vars=[
-                                            dict(ansible_command_timeout=120)
-                                        ],
-                                        tasks=[
-                                            dict(action=dict(module='ce_config', commands=conf.hostname)),
-                                            dict(action=dict(module='ce_config', lines=[conf.ospf, conf.ospf_area, conf.ospf_network]))
-                                            ]
-                                        )
-                                result = execute(my_play)
-                                kondisi = result.stats
-                                kond = kondisi['hosts'][0]['status']
-                                if kond == 'ok':
-                                    devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                else:
-                                    print("Cek koneksi Perangkat!!")
-                            elif t_os == 'ce' and dtype == 'switch' and matching > 0:
-                                savehost = AnsibleNetworkHost(host=cons,
-                                                    ansible_ssh_host=add_ip,
-                                                    ansible_user='admin',
-                                                    ansible_ssh_pass='54541691',
-                                                    ansible_become_pass='54541691',
-                                                    device_type=de_type,
-                                                    group=host.group)
-                                savehost.save()
-                                print(host)
-                                conf = ce_switch.objects.get(name=cons)
-                                my_play = dict(
-                                        name="hostname",
-                                        hosts=cons,
-                                        become='yes',
-                                        become_method='enable',
-                                        gather_facts='no',
-                                        vars=[
-                                            dict(ansible_command_timeout=120)
-                                        ],
-                                        tasks=[
-                                            dict(action=dict(module='ce_config', commands=conf.hostname)),
-                                            dict(action=dict(module='ce_config', commands=conf.vlan)),
-                                            dict(action=dict(module='ce_config', lines=[conf.port_ip, conf.port_cmd1, conf.port_vlan]))
-                                            ]
-                                        )
-                                result = execute(my_play)
-                                print(conf.name)
-                                print(result.results)
-                                kondisi = result.stats
-                                kond = kondisi['hosts'][0]['status']
-                                if kond == 'ok':
-                                    devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                    print("Berhasil AutoConfig!!")
-                                else:
-                                    print("Cek Koneksi Perangkat!!")
-                            elif t_os == 'routeros' and dtype == 'router' and matching > 0:
-                                savehost = AnsibleNetworkHost(host=cons,
-                                                        ansible_ssh_host=add_ip,
-                                                        ansible_user='mikrotik',
-                                                        ansible_ssh_pass='54541691',
-                                                        ansible_become_pass='54541691',
-                                                        device_type=de_type,
-                                                        group=host.group)
-                                savehost.save()
-                                conf = routeros_router.objects.get(name=cons)
-                                my_play = dict(
-                                        name="hostname",
-                                        hosts=cons,
-                                        become='yes',
-                                        become_method='enable',
-                                        gather_facts='no',
-                                        vars=[
-                                            dict(ansible_command_timeout=120)
-                                        ],
-                                        tasks=[
-                                            dict(action=dict(module='routeros_command', commands=conf.hostname)),
-                                            dict(action=dict(module='routeros_command', commands=conf.ospf)),
-                                            dict(action=dict(module='routeros_command', commands=conf.inter_vlan)),
-                                            dict(action=dict(module='routeros_coomand', commands=conf.ip_add_vlan))
-                                            ]
+                            result = execute(my_play)
+                            kondisi = result.stats
+                            kond = kondisi['hosts'][0]['status']
+                            if kond == 'ok':
+                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                            else:
+                                fail = result.results
+                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                print(f'{err}')
+                        elif t_os == 'ce' and dtype == 'switch' and matching > 0:
+                            savehost = AnsibleNetworkHost(host=cons,
+                                                ansible_ssh_host=add_ip,
+                                                ansible_user='admin',
+                                                ansible_ssh_pass='54541691',
+                                                ansible_become_pass='54541691',
+                                                device_type=de_type,
+                                                group=host.group)
+                            savehost.save()
+                            print(host)
+                            conf = ce_switch.objects.get(name=cons)
+                            my_play = dict(
+                                    name="hostname",
+                                    hosts=cons,
+                                    become='yes',
+                                    become_method='enable',
+                                    gather_facts='no',
+                                    vars=[
+                                        dict(ansible_command_timeout=120)
+                                    ],
+                                    tasks=[
+                                        dict(action=dict(module='ce_config', commands=conf.hostname)),
+                                        dict(action=dict(module='ce_config', commands=conf.vlan)),
+                                        dict(action=dict(module='ce_config', lines=[conf.port_ip, conf.port_cmd1, conf.port_vlan]))
+                                        ]
                                     )
-                                result = execute(my_play)
-                                kondisi = result.stats
-                                kond = kondisi['hosts'][0]['status']
-                                if kond == 'ok':
-                                    devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                else:
-                                    print("Cek Koneksi Perangkat!!")
+                            result = execute(my_play)
+                            print(conf.name)
+                            print(result.results)
+                            kondisi = result.stats
+                            kond = kondisi['hosts'][0]['status']
+                            if kond == 'ok':
+                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                            else:
+                                fail = result.results
+                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                print(f'{err}')
+                        elif t_os == 'routeros' and dtype == 'router' and matching > 0:
+                            savehost = AnsibleNetworkHost(host=cons,
+                                                    ansible_ssh_host=add_ip,
+                                                    ansible_user='mikrotik',
+                                                    ansible_ssh_pass='54541691',
+                                                    ansible_become_pass='54541691',
+                                                    device_type=de_type,
+                                                    group=host.group)
+                            savehost.save()
+                            conf = routeros_router.objects.get(name=cons)
+                            my_play = dict(
+                                    name="hostname",
+                                    hosts=cons,
+                                    become='yes',
+                                    become_method='enable',
+                                    gather_facts='no',
+                                    vars=[
+                                        dict(ansible_command_timeout=120)
+                                    ],
+                                    tasks=[
+                                        dict(action=dict(module='routeros_command', commands=conf.hostname)),
+                                        dict(action=dict(module='routeros_command', commands=conf.ospf)),
+                                        dict(action=dict(module='routeros_command', commands=conf.inter_vlan)),
+                                        dict(action=dict(module='routeros_coomand', commands=conf.ip_add_vlan))
+                                        ]
+                                )
+                            result = execute(my_play)
+                            kondisi = result.stats
+                            kond = kondisi['hosts'][0]['status']
+                            if kond == 'ok':
+                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                            else:
+                                fail = result.results
+                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                print(f'{err}')
         elif os == 'ce':
             arp.objects.filter(device_id=device).delete()
             my_play = dict(
@@ -1393,8 +1429,12 @@ def autoconf(device):
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
                                 devices.objects.filter(new_device_mac=findmac).update(stats='configured')
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
-                                print("Cek Koneksi Perangkat!!")
+                                fail = result.results
+                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                print(f'{err}')
                         elif t_os == 'ce' and dtype == 'router' and matching > 0:
                             savehost = AnsibleNetworkHost(host=cons,
                                                 ansible_ssh_host=add_ip,
@@ -1427,9 +1467,12 @@ def autoconf(device):
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
                                 devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                print("Berhasil AutoConfig!!")
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
-                                print("Cek Koneksi Perangkat!!")
+                                fail = result.results
+                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                print(f'{err}')
                         elif t_os == 'ce' and dtype == 'switch' and matching > 0:
                             savehost = AnsibleNetworkHost(host=cons,
                                                 ansible_ssh_host=add_ip,
@@ -1463,9 +1506,12 @@ def autoconf(device):
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
                                 devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                print("Berhasil AutoConfig!!")
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
-                                print("Cek Koneksi Perangkat!!")
+                                fail = result.results
+                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                print(f'{err}')
                         elif t_os == 'ios' and dtype == 'switch' and matching > 0:
                             savehost = AnsibleNetworkHost(host=cons,
                                                     ansible_ssh_host=add_ip,
@@ -1495,8 +1541,12 @@ def autoconf(device):
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
                                 devices.objects.filter(new_device_mac=findmac).update(stats='configured')
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
-                                print("Cek Koneksi Perangkat!!")
+                                fail = result.results
+                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                print(f'{err}')
                         elif t_os == 'routeros' and dtype == 'router' and matching > 0:
                             savehost = AnsibleNetworkHost(host=cons,
                                                     ansible_ssh_host=add_ip,
@@ -1528,8 +1578,12 @@ def autoconf(device):
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
                                 devices.objects.filter(new_device_mac=findmac).update(stats='configured')
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
-                                print("Cek Koneksi Perangkat!!")
+                                fail = result.results
+                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                print(f'{err}')
         elif os == 'routeros':
             arp.objects.filter(device_id=device).delete()
             my_play = dict(name="show arp",
@@ -1563,7 +1617,7 @@ def autoconf(device):
                                 port=portt,
                                 device_id=host)
                     coba.save()
-                    bookeds = devices.objects.filter(device_id=device, stats='Booked').values_list('new_device_mac')
+                bookeds = devices.objects.filter(device_id=device, stats='Booked').values_list('new_device_mac')
                 arps = arp.objects.filter(device_id=device).values_list('mac')
                 match = arps.intersection(bookeds)
                 print(bookeds)
@@ -1619,8 +1673,12 @@ def autoconf(device):
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
                                 devices.objects.filter(new_device_mac=findmac).update(stats='configured')
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
-                                print("Cek Koneksi Perangkat!!")
+                                fail = result.results
+                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                print(f'{err}')
                         elif t_os == 'ce' and dtype == 'router' and matching > 0:
                             savehost = AnsibleNetworkHost(host=cons,
                                                 ansible_ssh_host=add_ip,
@@ -1653,9 +1711,12 @@ def autoconf(device):
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
                                 devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                print("Berhasil AutoConfig!!")
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
-                                print("Cek Koneksi Perangkat!!")
+                                fail = result.results
+                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                print(f'{err}')
                         elif t_os == 'ce' and dtype == 'switch' and matching > 0:
                             savehost = AnsibleNetworkHost(host=cons,
                                                 ansible_ssh_host=add_ip,
@@ -1689,9 +1750,12 @@ def autoconf(device):
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
                                 devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                print("Berhasil AutoConfig!!")
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
-                                print("Cek Koneksi Perangkat!!")
+                                fail = result.results
+                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                print(f'{err}')
                         elif t_os == 'ios' and dtype == 'switch' and matching > 0:
                             savehost = AnsibleNetworkHost(host=cons,
                                                     ansible_ssh_host=add_ip,
@@ -1721,8 +1785,12 @@ def autoconf(device):
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
                                 devices.objects.filter(new_device_mac=findmac).update(stats='configured')
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
-                                print("Cek Koneksi Perangkat!!")
+                                fail = result.results
+                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                print(f'{err}')
                         elif t_os == 'routeros' and dtype == 'router' and matching > 0:
                             savehost = AnsibleNetworkHost(host=cons,
                                                     ansible_ssh_host=add_ip,
@@ -1754,8 +1822,12 @@ def autoconf(device):
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
                                 devices.objects.filter(new_device_mac=findmac).update(stats='configured')
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
-                                print("Cek Koneksi Perangkat!!")
+                                fail = result.results
+                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
+                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                print(f'{err}')
 
 
 
@@ -2102,15 +2174,18 @@ def addportdevice(request):
 
 def addgroup(request):
     if request.method == 'POST':
-        adddgroup = group(request.POST)
+        adddgroup = group(request.POST, instance=request.user)
         if adddgroup.is_valid():
             print(request.POST)
             data = request.POST
+            akun = request.user
             my_group = AnsibleNetworkGroup(name=data['name'],
                                ansible_connection='network_cli',
                                ansible_network_os=data['os'],
                                ansible_become=True)
             my_group.save()
+            logs = log(account=akun, targetss="Group Device", action="Add Group", status="Success",time=datetime.now(), messages="No Error")
+            logs.save()
             messages.success(request, f'Berhasil membuat group host network')
             return redirect('group-create')
     else:
@@ -2119,11 +2194,15 @@ def addgroup(request):
 
 def addhost(request):
     if request.method == 'POST':
-        adddhost = PostInventoryHost(request.POST)
+        adddhost = PostInventoryHost(request.POST, instance=request.user)
         if adddhost.is_valid():
             adddhost.save()
+            data = request.POST
+            akun = request.user
             messages.success(request, f'Berhasil membuat inventory host network')
-            return redirect('Ansible-home')
+            logs = log(account=akun, targetss='Host', action='Add Device '+data['host'], status='Success', time=datetime.now(), messages='No Error')
+            logs.save()
+            return redirect('host-create')
         else:
             return render(request, 'ansibleweb/post_host.html', {'form':adddhost})
     else:
@@ -2191,12 +2270,13 @@ def addTask(request):
 
 def namecisco(request):
     if request.method == 'POST':
-        host_form = hostnamecisco(request.POST)
+        host_form = hostnamecisco(request.POST, instance=request.user)
         if host_form.is_valid():
             host_form.save()
             messages.success(request, f'Configure Hostname Success')
             print(request.POST)
             data = request.POST
+            akun = request.user
             #host = form.cleaned_data.get['hosts']
             #name = form.cleaned_data.get['hostname']
             my_play = dict(
@@ -2211,12 +2291,32 @@ def namecisco(request):
                 )
             result = execute(my_play)
             #print(json.dumps(result.results, indent=4))
-            output = json.dumps(result.results, indent=4)
-            context = {
-                'host_form': host_form,
-                'output': output
-            }
-            return render(request, 'ansibleweb/ciscohostname.html', context)
+            kond = result.stats
+            kondisi = kond['hosts'][0]['status']
+            hos = kond['hosts'][0]['host']
+            if kondisi == 'ok':
+                dataport = result.results                
+                command = dataport['success'][0]['tasks'][0]['result']['commands'][0]
+                berhasil = dataport['success'][0]['tasks'][0]['result']['changed']
+                logs = log(account=akun, targetss=data['hosts'], action='Configure Hostname', status='Success', time=datetime.now(), messages='No Error')
+                logs.save()
+                output = "Device  :"+hos+"    Commands:"+command+"     Changed:"+berhasil
+                context = {
+                    'host_form': host_form,
+                    'output': output
+                }
+                return render(request, 'ansibleweb/ciscohostname.html', context)
+            else:
+                dataport = result.results
+                err = dataport['failed'][0]['tasks'][0]['result']['msg'][0]
+                logs = log(account=akun, targetss=data['hosts'], action='Configure Hostname', status='Failed', time=datetime.now(), messages=err)
+                logs.save()
+                output = "Device   :"+hos+"     Output:"+err
+                context = {
+                    'host_form': host_form,
+                    'output': output
+                }
+                return render(request, 'ansibleweb/ciscohostname.html', context)
     else:
         host_form = hostnamecisco()
     
@@ -2227,15 +2327,11 @@ def namecisco(request):
 
 def vlancisco(request):
     if request.method == 'POST':
-        vlan = vlan_cisco(request.POST)
+        vlan = vlan_cisco(request.POST, instance=request.user)
         if vlan.is_valid():
-            #host = form.cleaned_data.get('hosts')
-			#id = form.cleaned_data.get('vlan_id')
-            #name = form.cleaned_data.get('vlan_name')
             print(request.POST)
             data = request.POST
-            #host = form.cleaned_data['hosts']
-            #name = form.cleaned_data['hostname']
+            akun = request.user
             my_play = dict(
                 name="hostname",
                 hosts=data['hosts'],
@@ -2247,13 +2343,32 @@ def vlancisco(request):
                     ]
                 )
             result = execute(my_play)
-            #print(json.dumps(result.results, indent=4))
-            output = json.dumps(result.results, indent=4)
-            context = {
-                'vlan': vlan,
-                'output': output
-            }
-            return render(request, 'ansibleweb/ciscovlan.html', context)
+            kond = result.stats
+            kondisi = kond['hosts'][0]['status']
+            hos = kond['hosts'][0]['host']
+            if kondisi == 'ok':
+                dataport = result.results                
+                command = dataport['success'][0]['tasks'][0]['result']['commands'][0]
+                berhasil = dataport['success'][0]['tasks'][0]['result']['changed']
+                logs = log(account=akun, targetss=data['hosts'], action='Configure VLAN Cisco', status='Success', time=datetime.now(), messages='No Error')
+                logs.save()
+                output = "Device   :"+hos+"    Commands:"+command+"     Changed:"+berhasil
+                context = {
+                    'vlan': vlan,
+                    'output': output
+                }
+                return render(request, 'ansibleweb/ciscovlan.html', context)
+            else:
+                dataport = result.results
+                err = dataport['failed'][0]['tasks'][0]['result']['msg'][0]
+                logs = log(account=akun, targetss=data['hosts'], action='Configure VLAN Cisco', status='Failed', time=datetime.now(), messages=err)
+                logs.save()
+                output = "Device   :"+hos+"    Output:"+err
+                context = {
+                    'vlan': vlan,
+                    'output': output
+                }
+                return render(request, 'ansibleweb/ciscovlan.html', context)
     else:
         vlan = vlan_cisco()
     
@@ -2264,10 +2379,11 @@ def vlancisco(request):
 
 def ospfcisco(request):
     if request.method == 'POST':
-        ospf = ospf_cisco(request.POST)
+        ospf = ospf_cisco(request.POST, instance=request.user)
         if ospf.is_valid():
             print(request.POST)
             data = request.POST
+            akun = request.user
             my_play = dict(
                 name="hostname",
                 hosts=data['hosts'],
@@ -2279,13 +2395,32 @@ def ospfcisco(request):
                     ]
                 )
             result = execute(my_play)
-            #print(json.dumps(result.results, indent=4))
-            output = json.dumps(result.results, indent=4)
-            context = {
-                'ospf': ospf,
-                'output': output
-            }
-            return render(request, 'ansibleweb/ciscoospf.html', context)
+            kond = result.status
+            kondisi = kond['hosts'][0]['status']
+            hos = kond['hosts'][0]['host']
+            if kondisi == 'ok':
+                dataport = result.results                
+                command = dataport['success'][0]['tasks'][0]['result']['commands'][0]
+                berhasil = dataport['success'][0]['tasks'][0]['result']['changed']
+                logs = log(account=akun ,targetss=data['hosts'], action='Configure OSPF cisco', status='Success', time=datetime.now(), messages='No Error')
+                logs.save()
+                output = "Device   :"+hos+"    Commands:"+command+"    Changed:"+berhasil
+                context = {
+                    'ospf': ospf,
+                    'output': output
+                }
+                return render(request, 'ansibleweb/ciscoospf.html', context)
+            else:
+                dataport = result.results
+                err = dataport['failed'][0]['tasks'][0]['result']['msg'][0]
+                logs = log(account=akun, targetss=data['hosts'], action='Configure OSPF Cisco', status='Failed', time=datetime.now(), messages=err)
+                logs.save()
+                output = "Device   :"+hos+"    Output:"+err
+                context = {
+                    'ospf': ospf,
+                    'output': output
+                }
+                return render(request, 'ansibleweb/ciscoospf.html', context)
     else:
         ospf = ospf_cisco()
     
@@ -2294,18 +2429,8 @@ def ospfcisco(request):
     }
     return render(request, 'ansibleweb/ciscoospf.html', context)
 
-def play():
-    plays = PlayBooks.objects.all().prefetch_related('task')
-    
-    my_play = [{
-        'name':play.name,
-        'hosts':play.hosts, 
-        'become':play.become, 
-        'become_method':play.become_method, 
-        'gather_facts':play.gather_facts, 
-        'tasks':[{'module':actions.module, 'commands':actions.commands} for actions in play.task.all()]} for play in plays]
 
-def log(request):
+def log_info(request):
     logs = log.objects.all()
 
     context = {
@@ -2388,10 +2513,11 @@ def restorecisco(request):
 
 def namehuawei(request):
     if request.method=="POST":
-        hostname = hostnamehuawei(request.POST)
+        hostname = hostnamehuawei(request.POST, instance=request.user)
         if hostname.is_valid():
             print(request.POST)
             data = request.POST
+            akun = request.user
             my_play = dict(
                 name="conf name",
                 hosts=data['hosts'],
@@ -2403,20 +2529,32 @@ def namehuawei(request):
                 ]
             )
             result = execute(my_play)
-            data = result.stats
-            results = result.results
-            device = data['hosts'][0]['host']
-            status = data['hosts'][0]['status']
-            #failed = results['failed'][0]['tasks'][0]['result']['msg']
-            #success = results['success'][0]['tasks'][0]['result']['stdout_lines'][0]
-
-            output = "Host :"+device+"    Config:"+status
-                
-            context = {
-                'hostname': hostname,
-                'output': output
-            }
-            return render(request, 'ansibleweb/huawei/huaweihostname.html', context)
+            kond = result.status
+            kondisi = kond['hosts'][0]['status']
+            hos = kond['hosts'][0]['host']
+            if kondisi == 'ok':
+                dataport = result.results                
+                command = dataport['success'][0]['tasks'][0]['result']['commands'][0]
+                berhasil = dataport['success'][0]['tasks'][0]['result']['changed']
+                logs = log(account=akun, targetss=data['hosts'], action='Configure Hostname Huawei', status='Success', time=datetime.now(), messages='No Error')
+                logs.save()
+                output = "Device   :"+hos+"    Commands:"+command+"    Changed:"+berhasil
+                context = {
+                    'hostname': hostname,
+                    'output': output
+                }
+                return render(request, 'ansibleweb/huawei/huaweihostname.html', context)
+            else:
+                dataport = result.results
+                err = dataport['failed'][0]['tasks'][0]['result']['msg'][0]
+                logs = log(account=akun,targetss=data['hosts'], action='Configure Hostname Huawei', status='Failed', time=datetime.now(), messages=err)
+                logs.save()
+                output = "Device   :"+hos+"    Output:"+err
+                context = {
+                    'hostname': hostname,
+                    'output': output
+                }
+                return render(request, 'ansibleweb/huawei/huaweihostname.html', context)
     else:
         hostname = hostnamehuawei()
 
@@ -2427,10 +2565,11 @@ def namehuawei(request):
 
 def ospfhuawei(request):
     if request.method=='POST':
-        ospf = ospf_huawei(request.POST)
+        ospf = ospf_huawei(request.POST, instance=request.user)
         if ospf.is_valid():
             print(request.POST)
             data = request.POST
+            akun = request.user
             my_play = dict(
                 name="Configure OSPF",
                 hosts=data['hosts'],
@@ -2442,12 +2581,32 @@ def ospfhuawei(request):
                 ]
             )
             result = execute(my_play)
-            output = json.dumps(result.results, indent=4)
-            context = {
-                'ospf': ospf,
-                'output': output
-            }
-            return render(request, 'ansibleweb/huawei/huaweiospf.html', context)
+            kond = result.status
+            kondisi = kond['hosts'][0]['status']
+            hos = kond['hosts'][0]['host']
+            if kondisi == 'ok':
+                dataport = result.results                
+                command = dataport['success'][0]['tasks'][0]['result']['commands'][0]
+                berhasil = dataport['success'][0]['tasks'][0]['result']['changed']
+                logs = log(account=akun, targetss=data['hosts'], action='Configure OSPF Huawei', status='Success', time=datetime.now(), messages='No Error')
+                logs.save()
+                output = "Device   :"+hos+"    Commands:"+command+"    Changed:"+berhasil
+                context = {
+                    'ospf': ospf,
+                    'output': output
+                }
+                return render(request, 'ansibleweb/huawei/huaweiospf.html', context)
+            else:
+                dataport = result.results
+                err = dataport['failed'][0]['tasks'][0]['result']['msg'][0]
+                logs = log(account=akun, targetss=data['hosts'], action='Configure OSPF Huawei', status='Failed', time=datetime.now(), messages=err)
+                logs.save()
+                output = "Device   :"+hos+"    Output:"+err
+                context = {
+                    'ospf': ospf,
+                    'output': output
+                }
+                return render(request, 'ansibleweb/huawei/huaweiospf.html', context)
     else:
         ospf = ospf_huawei()
     
@@ -2458,10 +2617,11 @@ def ospfhuawei(request):
 
 def ivlan_huawei(request):
     if request.method=='POST':
-        ivlan = intervlan_huawei(request.POST)
+        ivlan = intervlan_huawei(request.POST, instance=request.user)
         if ivlan.is_valid():
             print(request.POST)
             data = request.POST
+            akun = request.user
             my_play = dict(
                 name="Configure Inter VLAN",
                 hosts=data['hosts'],
@@ -2472,13 +2632,33 @@ def ivlan_huawei(request):
                     dict(action=dict(module='ce_config', lines=[data['interface'], data['ipadd'], data['cmd']]))
                 ]
             )
-        result = execute(my_play)
-        output = json.dumps(result.results, indent=4)
-        context = {
-            'ivlan': ivlan,
-            'output': output
-        }
-        return render(request, 'ansibleweb/huawei/ivlan_huawei.html', context)
+            result = execute(my_play)
+            kond = result.status
+            kondisi = kond['hosts'][0]['status']
+            hos = kond['hosts'][0]['host']
+            if kondisi == 'ok':
+                dataport = result.results                
+                command = dataport['success'][0]['tasks'][0]['result']['commands'][0]
+                berhasil = dataport['success'][0]['tasks'][0]['result']['changed']
+                logs = log(account=akun, targetss=data['hosts'], action='Configure InterVLAN Huawei', status='Success', time=datetime.now(), messages='No Error')
+                logs.save()
+                output = "Device   :"+hos+"    Commands:"+command+"    Changed:"+berhasil
+                context = {
+                    'ivlan': ivlan,
+                    'output': output
+                }
+                return render(request, 'ansibleweb/huawei/ivlan_huawei.html', context)
+            else:
+                dataport = result.results
+                err = dataport['failed'][0]['tasks'][0]['result']['msg'][0]
+                logs = log(account=akun, targetss=data['hosts'], action='Configure InterVLAN Huawei', status='Failed', time=datetime.now(), messages=err)
+                logs.save()
+                output = "Device   :"+hos+"    Output:"+err
+                context = {
+                    'ivlan': ivlan,
+                    'output': output
+                }
+                return render(request, 'ansibleweb/huawei/ivlan_huawei.html', context)
     else:
         ivlan = intervlan_huawei()
 
@@ -2641,10 +2821,11 @@ def restorehuawei(request):
 
 def namemikrotik(request):
     if request.method=='POST':
-        name = hostnamemikrotik(request.POST)
+        name = hostnamemikrotik(request.POST, instance=request.user)
         if name.is_valid():
             print(request.POST)
             data = request.POST
+            akun = request.user
             my_play = dict(
                 name="hostname",
                 hosts=data['hosts'],
@@ -2658,13 +2839,33 @@ def namemikrotik(request):
                     dict(action=dict(module='routeros_command', commands='/system identity set name='+data['hostname']))
                 ]
             )
-        result = execute(my_play)
-        output = json.dumps(result.results, indent=4)
-        context = {
-            'name': name,
-            'output': output
-        }
-        return render(request, 'ansibleweb/mikrotik/namemikrotik.html', context)
+            result = execute(my_play)
+            kond = result.status
+            kondisi = kond['hosts'][0]['status']
+            hos = kond['hosts'][0]['host']
+            if kondisi == 'ok':
+                dataport = result.results                
+                command = dataport['success'][0]['tasks'][0]['result']['commands'][0]
+                berhasil = dataport['success'][0]['tasks'][0]['result']['changed']
+                logs = log(account=akun, targetss=data['hosts'], action='Configure hostname Mikrotik', status='Success', time=datetime.now(), messages='No Error')
+                logs.save()
+                output = "Device   :"+hos+"    Commands:"+command+"    Changed:"+berhasil
+                context = {
+                    'name': name,
+                    'output': output
+                }
+                return render(request, 'ansibleweb/mikrotik/namemikrotik.html', context)
+            else:
+                dataport = result.results
+                err = dataport['failed'][0]['tasks'][0]['result']['msg'][0]
+                logs = log(account=akun, targetss=data['hosts'], action='Configure hostname Mikrotik', status='Failed', time=datetime.now(), messages=err)
+                logs.save()
+                output = "Device   :"+hos+"    Output:"+err
+                context = {
+                    'name': name,
+                    'output': output
+                }
+                return render(request, 'ansibleweb/mikrotik/namemikrotik.html', context)
     else:
         name = hostnamemikrotik()
         
@@ -2675,10 +2876,11 @@ def namemikrotik(request):
     
 def ipaddmtk(request):
     if request.method=='POST':
-        ipadd = ipaddmikrotik(request.POST)
+        ipadd = ipaddmikrotik(request.POST, instance=request.user)
         if ipadd.is_valid():
             print(request.POST)
             data = request.POST
+            akun = request.user
             my_play = dict(
                 name="Ip address",
                 hosts=data['hosts'],
@@ -2692,13 +2894,33 @@ def ipaddmtk(request):
                     dict(action=dict(module='routeros_command', commands='/ip address add address='+data['ipadd']+' interface='+data['interface']))
                 ]
             )
-        result = execute(my_play)
-        output = json.dumps(result.results, indent=4)
-        context = {
-            'ipadd': ipadd,
-            'output': output
-        }
-        return render(request, 'ansibleweb/mikrotik/ipaddmikrotik.html', context)
+            result = execute(my_play)
+            kond = result.status
+            kondisi = kond['hosts'][0]['status']
+            hos = kond['hosts'][0]['host']
+            if kondisi == 'ok':
+                dataport = result.results                
+                command = dataport['success'][0]['tasks'][0]['result']['commands'][0]
+                berhasil = dataport['success'][0]['tasks'][0]['result']['changed']
+                logs = log(account=akun, targetss=data['hosts'], action='Configure IP Address Mikrotik', status='Success', time=datetime.now(), messages='No Error')
+                logs.save()
+                output = "Device   :"+hos+"    Commands:"+command+"    Changed:"+berhasil
+                context = {
+                    'ipadd': ipadd,
+                    'output': output
+                }
+                return render(request, 'ansibleweb/mikrotik/ipaddmikrotik.html', context)
+            else:
+                dataport = result.results
+                err = dataport['failed'][0]['tasks'][0]['result']['msg'][0]
+                logs = log(account=akun, targetss=data['hosts'], action='Configure OSPF Cisco', status='Failed', time=datetime.now(), messages=err)
+                logs.save()
+                output = "Device   :"+hos+"    Output:"+err
+                context = {
+                    'ipadd': ipadd,
+                    'output': output
+                }
+                return render(request, 'ansibleweb/mikrotik/ipaddmikrotik.html', context)
     else:
         ipadd = ipaddmikrotik()
         
@@ -2709,10 +2931,11 @@ def ipaddmtk(request):
 
 def ospfmikrotik(request):
     if request.method=='POST':
-        ospf = ospf_mikrotik(request.POST)
+        ospf = ospf_mikrotik(request.POST, instance=request.user)
         if ospf.is_valid():
             print(request.POST)
-            data =request.POST
+            data = request.POST
+            akun = request.user
             my_play = dict(
                 name="OSPF",
                 hosts=data['hosts'],
@@ -2726,13 +2949,33 @@ def ospfmikrotik(request):
                     dict(action=dict(module='routeros_command', commands='/routing ospf network add network='+data['network']+' area='+data['area']))
                 ]
             )
-        result = execute(my_play)
-        output = json.dumps(result.results, indent=4)
-        context = {
-            'ospf': ospf,
-            'output': output
-        }
-        return render(request, 'ansibleweb/mikrotik/ospfmikrotik.html', context)
+            result = execute(my_play)
+            kond = result.status
+            kondisi = kond['hosts'][0]['status']
+            hos = kond['hosts'][0]['host']
+            if kondisi == 'ok':
+                dataport = result.results                
+                command = dataport['success'][0]['tasks'][0]['result']['commands'][0]
+                berhasil = dataport['success'][0]['tasks'][0]['result']['changed']
+                logs = log(account=akun, targetss=data['hosts'], action='Configure OSPF Mikrotik', status='Success', time=datetime.now(), messages='No Error')
+                logs.save()
+                output = "Device   :"+hos+"    Commands:"+command+"    Changed:"+berhasil
+                context = {
+                    'ospf': ospf,
+                    'output': output
+                }
+                return render(request, 'ansibleweb/mikrotik/ospfmikrotik.html', context)
+            else:
+                dataport = result.results
+                err = dataport['failed'][0]['tasks'][0]['result']['msg'][0]
+                logs = log(account=akun, targetss=data['hosts'], action='Configure OSPF Cisco', status='Failed', time=datetime.now(), messages=err)
+                logs.save()
+                output = "Device   :"+hos+"    Output:"+err
+                context = {
+                    'ospf': ospf,
+                    'output': output
+                }
+                return render(request, 'ansibleweb/mikrotik/ospfmikrotik.html', context)
     else:
         ospf = ospf_mikrotik()
         

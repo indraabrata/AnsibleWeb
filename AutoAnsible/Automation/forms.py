@@ -5,7 +5,9 @@ from django import forms
 from .models import c_hostname
 
 class hostnamecisco(ModelForm):
-    hosts = forms.ModelChoiceField(queryset=AnsibleNetworkGroup.objects.all().filter(ansible_network_os='ios'), to_field_name="name")
+    oss = AnsibleNetworkGroup.objects.all().filter(ansible_network_os='ios')
+    os = oss[0]
+    hosts = forms.ModelChoiceField(queryset=AnsibleNetworkHost.objects.all().filter(group_id=os), to_field_name="host")
     class Meta:
         model = c_hostname
         fields = ['name','hosts']
@@ -14,12 +16,16 @@ class hostnamecisco(ModelForm):
         }
 
 class vlan_cisco(forms.Form):
-    hosts = forms.ModelChoiceField(queryset=AnsibleNetworkGroup.objects.all().filter(ansible_network_os='ios'), to_field_name="name")
+    oss = AnsibleNetworkGroup.objects.all().filter(ansible_network_os='ios')
+    os = oss[0]
+    hosts = forms.ModelChoiceField(queryset=AnsibleNetworkHost.objects.all().filter(group_id=os), to_field_name="host")
     vlan_id = forms.CharField()
     vlan_name = forms.CharField()
 
 class ospf_cisco(forms.Form):
-    hosts = forms.ModelChoiceField(queryset=AnsibleNetworkGroup.objects.all().filter(ansible_network_os='ios'), to_field_name="name")
+    oss = AnsibleNetworkGroup.objects.all().filter(ansible_network_os='ios')
+    os = oss[0]
+    hosts = forms.ModelChoiceField(queryset=AnsibleNetworkHost.objects.all().filter(group_id=os), to_field_name="host")
     parents = forms.CharField()
     lines = forms.CharField()
 
@@ -32,16 +38,22 @@ class ciscorestore(forms.Form):
 #HUAWEI FORM ----------------------------------------
 
 class hostnamehuawei(forms.Form):
-    hosts = forms.ModelChoiceField(queryset=AnsibleNetworkGroup.objects.all().filter(ansible_network_os='ce'), to_field_name="name")
+    oss = AnsibleNetworkGroup.objects.all().filter(ansible_network_os='ce')
+    os = oss[0]
+    hosts = forms.ModelChoiceField(queryset=AnsibleNetworkHost.objects.all().filter(group_id=os), to_field_name="host")
     hostname = forms.CharField()
 
 class ospf_huawei(forms.Form):
-    hosts = forms.ModelChoiceField(queryset=AnsibleNetworkGroup.objects.all().filter(ansible_network_os='ce'), to_field_name="name")
+    oss = AnsibleNetworkGroup.objects.all().filter(ansible_network_os='ce')
+    os = oss[0]
+    hosts = forms.ModelChoiceField(queryset=AnsibleNetworkHost.objects.all().filter(group_id=os), to_field_name="host")
     area = forms.CharField()
     network = forms.CharField()
 
 class intervlan_huawei(forms.Form):
-    hosts = forms.ModelChoiceField(queryset=AnsibleNetworkGroup.objects.all().filter(ansible_network_os='ce'), to_field_name="name")
+    oss = AnsibleNetworkGroup.objects.all().filter(ansible_network_os='ce')
+    os = oss[0]
+    hosts = forms.ModelChoiceField(queryset=AnsibleNetworkHost.objects.all().filter(group_id=os), to_field_name="host")
     interface = forms.CharField()
     ipadd = forms.CharField()
     cmd = forms.CharField()
@@ -55,11 +67,15 @@ class huaweirestore(forms.Form):
 
 #MIKROTIK FORM -------------------------------------
 class hostnamemikrotik(forms.Form):
-    hosts = forms.ModelChoiceField(queryset=AnsibleNetworkGroup.objects.all().filter(ansible_network_os='routeros'), to_field_name="name")
+    oss = AnsibleNetworkGroup.objects.all().filter(ansible_network_os='routeros')
+    os = oss[0]
+    hosts = forms.ModelChoiceField(queryset=AnsibleNetworkHost.objects.all().filter(group_id=os), to_field_name="host")
     hostname = forms.CharField()
 
 class ipaddmikrotik(forms.Form):
-    hosts = forms.ModelChoiceField(queryset=AnsibleNetworkGroup.objects.all().filter(ansible_network_os='routeros'), to_field_name="name")
+    oss = AnsibleNetworkGroup.objects.all().filter(ansible_network_os='routeros')
+    os = oss[0]
+    hosts = forms.ModelChoiceField(queryset=AnsibleNetworkHost.objects.all().filter(group_id=os), to_field_name="host")
     ipadd = forms.CharField()
     interface = forms.CharField()
 
@@ -71,7 +87,9 @@ AREA_OSPF = (
 )
 
 class ospf_mikrotik(forms.Form):
-    hosts = forms.ModelChoiceField(queryset=AnsibleNetworkGroup.objects.all().filter(ansible_network_os='routeros'), to_field_name="name")
+    oss = AnsibleNetworkGroup.objects.all().filter(ansible_network_os='routeros')
+    os = oss[0]
+    hosts = forms.ModelChoiceField(queryset=AnsibleNetworkHost.objects.all().filter(group_id=os), to_field_name="host")
     network = forms.CharField()
     area = forms.ChoiceField(choices=AREA_OSPF) 
 

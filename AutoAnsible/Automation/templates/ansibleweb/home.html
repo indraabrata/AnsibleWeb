@@ -69,22 +69,46 @@
                 <div class="card-body">
                    <table class="table">
                        <tr>
+                           <th>Account</th>
                            <th>Target</th>
                            <th>Action</th>
                            <th>Status</th>
                            <th>Time</th>
                            <th>Messages</th>
                        </tr>
-                       {% for log in logs %}
+                       {% for page in pages %}
                             <tr>
-                                <td>{{ log.target }}</td>
-                                <td>{{ log.action }}</td>
-                                <td>{{ log.status }} </td>
-                                <td>{{ log.time }}</td>
-                                <td>{{ log.messages }}</td>                
+                                <td>{{ page.account }}</td>
+                                <td>{{ page.targetss }}</td>
+                                <td>{{ page.action }}</td>
+                                <td>{{ page.status }} </td>
+                                <td>{{ page.time }}</td>
+                                <td>{{ page.messages }}</td>                
                             </tr> 
                         {% endfor %}
                    </table>
+                   {{% if pages.has_other_pages %}
+                   <ul class="pagination">
+                     {% if pages.has_previous %}
+                       <li><a href="?page={{ pages.previous_page_number }}">«</a></li>
+                     {% else %}
+                       <li class="disabled"><span>«</span></li>
+                     {% endif %}
+                     {% for i in pages.paginator.page_range %}
+                       {% if pages.number == i %}
+                         <li class="active"><span>{{ i }} <span class="sr-only">(current)</span></span></li>
+                       {% else %}
+                         <li><a href="?page={{ i }}">{{ i }}</a></li>
+                       {% endif %}
+                     {% endfor %}
+                     {% if pages.has_next %}
+                       <li><a href="?page={{ pages.next_page_number }}">»</a></li>
+                     {% else %}
+                       <li class="disabled"><span>»</span></li>
+                     {% endif %}
+                   </ul>
+                 {% endif %}}
+
                 </div>
             </div>
             
