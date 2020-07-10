@@ -146,6 +146,7 @@ def prekonfig(request, pk):
     tipe = select.new_device_type
     cek = select.new_device_os
     state = select.preconf
+    print(state)
     if cek == 'ios' and tipe == 'router':
         if state == 'empty':
             if request.method == 'POST':
@@ -184,6 +185,7 @@ def prekonfig(request, pk):
         else:
             if request.method == 'POST':
                 form_ios = ios_router(request.POST)
+                Print('TIDAK EMPTY')
                 if form_ios.is_valid():
                     data = request.POST
                     print(request.POST)
@@ -202,7 +204,7 @@ def prekonfig(request, pk):
                                                                     dns_server='dns-server '+data['dns_server'],
                                                                     dhcp_pool='ip dhcp pool '+data['dhcp_pool'])
                     idd = select.id
-                    devices.objects.filter(id=idd).update(preconf=data['name'], new_device_mac=data['mac'])
+                    devices.objects.filter(id=idd).update(preconf=data['name'], new_device_mac=data['mac'], stats='Booked')
                     messages.success(request, f'Successfully update PreConfiguration!')
                     return redirect('/')
             else:
@@ -246,7 +248,7 @@ def prekonfig(request, pk):
                                     vlan_id=data['vlan_id'],
                                     vlan_name=data['vlan_name'])
                     idd = select.id
-                    devices.objects.filter(id=idd).update(preconf=data['name'], new_device_mac=data['mac'])
+                    devices.objects.filter(id=idd).update(preconf=data['name'], new_device_mac=data['mac'] ,stats='Booked')
                     messages.success(request, f'Successfully update PreConfiguration!')
                     return redirect('/')
             else:
@@ -291,6 +293,7 @@ def prekonfig(request, pk):
             }
             return render(request, 'ansibleweb/huawei/ce_router_preconfig.html', context)
         else:
+            print('TIDAK VALID')
             if request.method == 'POST':
                 form_ce = ce_router_form(request.POST)
                 if form_ce.is_valid():
@@ -310,7 +313,7 @@ def prekonfig(request, pk):
                                                                     dhcp_server_dnslist ='dhcp server dns-list '+data['dhcp_server_dnslist'],
                                                                     dhcp_server_excluded='dhcp server excluded-ip-address '+data['dhcp_server_excluded'])
                     update = select.id
-                    devices.objects.filter(id=update).update(preconf=data['name'], new_device_mac=data['mac'])
+                    devices.objects.filter(id=update).update(preconf=data['name'], new_device_mac=data['mac'], stats='Booked')
                     messages.success(request, f'Successfully update PreConfiguration!')
                     return redirect('/')
             else:
@@ -360,7 +363,7 @@ def prekonfig(request, pk):
                                                                     port_vlan='port default vlan '+data['port_vlan'],
                                                                     port_cmd1='port link-type '+data['port_cmd1'])
                     update = select.id
-                    devices.objects.filter(id=update).update(preconf=data['name'], new_device_mac=data['mac'])
+                    devices.objects.filter(id=update).update(preconf=data['name'], new_device_mac=data['mac'], stats='Booked')
                     messages.success(request, f'Successfully update PreConfiguration!')
                     return redirect('/')
             else:
@@ -408,7 +411,7 @@ def prekonfig(request, pk):
                                         inter_vlan='/interface vlan add name='+data['vlan_name']+' vlan-id='+data['vlan_id']+' interface='+data['vlan_int'],
                                         ip_add_vlan='/ip address add address='+data['ip_add_vlan']+' interface='+data['interface_vlan'])
                     update = select.id
-                    devices.objects.filter(id=update).update(preconf=data['name'], new_device_mac=data['mac'])
+                    devices.objects.filter(id=update).update(preconf=data['name'], new_device_mac=data['mac'] ,stats='Booked')
                     messages.success(request, f'Successfully update PreConfiguration!')
                     return redirect('/')
             else:
@@ -418,6 +421,7 @@ def prekonfig(request, pk):
             }
             return render(request, 'ansibleweb/mikrotik/routeros_router_form.html', context)
     else:
+        messages.warning(request, f'Belum menambahkan Tipe Device Baru')
         return redirect('/')
     
 
@@ -1075,7 +1079,7 @@ def arpconfig(request):
                         messages.warning(request, f'Check Connection to Remote Host!')
                         return redirect('arp')
     elif request.method == 'GET' and 'btnform2' in request.GET:
-        form = autoconfig(request.GET, instance=request.user)
+        form = autoconfig(request.GET, request.user)
         if form.is_valid():
             data = request.GET
             akun = request.user
@@ -1146,7 +1150,8 @@ def autoconf(device, akun):
                     for z in range(0, jumlah):
                         findmac = match[z][0]
                         getportarp = arp.objects.filter(device_id=device, mac=findmac).values_list('port')
-                        cekkamus = kamusport.objects.get(portarp=getportarp)
+                        portarpp = getportarp[0][0] 
+                        cekkamus = kamusport.objects.get(portarp=portarpp)
                         port_out = cekkamus.portint
                         cekking = devices.objects.filter(device_id=device, stats='Booked', new_device_mac=findmac, port=port_out)
                         matching = len(cekking)
@@ -1386,8 +1391,10 @@ def autoconf(device, akun):
                         findmac = match[z][0]
                         print(findmac)
                         getportarp = arp.objects.filter(device_id=device, mac=findmac).values_list('port')
-                        cekkamus = kamusport.objects.get(portarp=getportarp)
+                        portarpp = getportarp[0][0] 
+                        cekkamus = kamusport.objects.get(portarp=portarpp)
                         port_out = cekkamus.portint
+                        print(port_out)
                         cekking = devices.objects.filter(device_id=device, stats='Booked', new_device_mac=findmac, port=port_out)
                         matching = len(cekking)
                         os_type = devices.objects.filter(new_device_mac=findmac).values_list('new_device_os')
@@ -1630,7 +1637,8 @@ def autoconf(device, akun):
                         findmac = match[z][0]
                         print(findmac)
                         getportarp = arp.objects.filter(device_id=device, mac=findmac).values_list('port')
-                        cekkamus = kamusport.objects.get(portarp=getportarp)
+                        portarpp = getportarp[0][0] 
+                        cekkamus = kamusport.objects.get(portarp=portarpp)
                         port_out = cekkamus.portint
                         cekking = devices.objects.filter(device_id=device, stats='Booked', new_device_mac=findmac, port=port_out)
                         matching = len(cekking)
@@ -2194,7 +2202,7 @@ def addgroup(request):
 
 def addhost(request):
     if request.method == 'POST':
-        adddhost = PostInventoryHost(request.POST, instance=request.user)
+        adddhost = PostInventoryHost(request.POST, request.user)
         if adddhost.is_valid():
             adddhost.save()
             data = request.POST
