@@ -1,6 +1,6 @@
 from django.db import models
 from dj_ansible.models import AnsibleNetworkHost,AnsibleNetworkGroup
-from django.forms import ModelForm ,CheckboxInput, ModelChoiceField
+from django.forms import ModelForm ,CheckboxInput, ModelChoiceField, formset_factory
 from django import forms
 from .models import c_hostname
 
@@ -104,3 +104,14 @@ class mikrotikrestore(forms.Form):
 class autoconfig(forms.Form):
     hosts = forms.ModelChoiceField(queryset=AnsibleNetworkHost.objects.all())
 
+
+class host_huawei(forms.Form):
+    oss = AnsibleNetworkGroup.objects.all().filter(ansible_network_os='ios')
+    os = oss[0]
+    hosts = forms.ModelChoiceField(queryset=AnsibleNetworkHost.objects.all().filter(group_id=os), to_field_name="host")
+
+class vlan(forms.Form):
+    vlan_id = forms.CharField()
+    vlan_name = forms.CharField()
+    
+vlanset = formset_factory(vlan, extra=1)

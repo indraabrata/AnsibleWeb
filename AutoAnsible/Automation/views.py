@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from users.forms import UserRegisterForm
 from django.contrib.auth.decorators import login_required
 from .models import PostInventoryGroup, PostInventoryHost ,PostPlayBookForm, TaskForm, log, group, addinfodevice , ios_router, preconfdevice, arp, ce_router_form, ce_router, kamusport, ios_switch, ios_switch_form, devices, iosrouter, ce_switch, ce_switch_form, routeros_router, routeros_router_form
-from .forms import hostnamecisco, vlan_cisco, ospf_cisco, ciscobackup, ciscorestore, hostnamehuawei, ospf_huawei, intervlan_huawei, huaweibackup, hostnamemikrotik, ipaddmikrotik, ospf_mikrotik, mikrotikbackup, huaweirestore, mikrotikrestore, autoconfig
+from .forms import hostnamecisco, vlan_cisco, ospf_cisco, ciscobackup, ciscorestore, hostnamehuawei, ospf_huawei, intervlan_huawei, huaweibackup, hostnamemikrotik, ipaddmikrotik, ospf_mikrotik, mikrotikbackup, huaweirestore, mikrotikrestore, autoconfig , vlanset, host_huawei
 from django.contrib import messages
 from django.db.models.fields.related import ManyToManyField
 #from djansible.models import PlayBooks
@@ -14,7 +14,6 @@ from dj_ansible.models import AnsibleNetworkHost, AnsibleNetworkGroup
 from dj_ansible.ansible_kit import execute
 import json
 from datetime import datetime
-from celery import shared_task
 import time
 from asgiref.sync import sync_to_async
 import threading
@@ -3075,3 +3074,64 @@ def restoremikrotik(request):
         'restore': restore
     }
     return render(request, 'ansibleweb/mikrotik/restoremikrotik.html', context)
+
+
+def conf_vlan(request):
+    if request.method == 'POST':
+        form_host = host_huawei(request.POST)
+        formset = vlanset(request.POST)
+        if form_host.is_valid() and formset.is_valid():
+            for form in formset:
+                my_play = dict(
+                    name="Config VLAN",
+                    hosts=data['hosts'],
+                    become='yes',
+                    become_method='enable',
+                    gather_facts='no',
+                    vars=[
+                        dict(ansible_command_timeout=120)
+                    ],
+                    tasks=[
+                        dict(action=dict(module='ce_config', lines=['vlan '+data['vlan_id'], 'description '+data['vlan_name']]))
+                    ]
+                )
+                result = execute(my_play)
+                kond = result.status
+                kondisi = kond['hosts'][0]['status']
+                hos = kond['hosts'][0]['host']
+                if kondisi == 'ok':
+                    dataport = result.results                
+                    command = dataport['success'][0]['tasks'][0]['result']['commands'][0]
+                    berhasil = dataport['success'][0]['tasks'][0]['result']['changed']
+                    logs = log(account=akun, targetss=hos, action='Configure Vlan '+hos, status='Success', time=datetime.now(), messages='No Error')
+                    logs.save()
+                    output = "Device   :"+hos+"    Commands:"+command+"    Changed:"+berhasil
+                    context = {
+                        'form_host': form_host,
+                        'formset': formset,
+                        'output': output
+                    }
+                    return render(request, 'ansibleweb/vlan.html', context)
+                else:
+                    dataport = result.results
+                    err = dataport['failed'][0]['tasks'][0]['result']['msg'][0]
+                    logs = log(account=akun, targetss=hos, action='Configure VLAN '+hos, status='Failed', time=datetime.now(), messages=err)
+                    logs.save()
+                    output = "Device   :"+hos+"    Output:"+err
+                    context = {
+                        'form_host': form_host,
+                        'formset': formset,
+                        'output': output
+                    }
+                    return render(request, 'ansibleweb/vlan.html', context)
+    else:
+        form_host = host_huawei()
+        formset = vlanset()
+    
+    context = {
+        'form_host': form_host,
+        'formset': formset
+    }
+    return render(request, 'ansibleweb/vlan.html', context)
+
+
