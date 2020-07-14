@@ -87,8 +87,7 @@
                             </tr> 
                         {% endfor %}
                    </table>
-                   {{% if pages.has_other_pages %}
-                   <ul class="pagination">
+                   <ul class="pagination align-items-center">
                      {% if pages.has_previous %}
                        <li><a href="?page={{ pages.previous_page_number }}">«</a></li>
                      {% else %}
@@ -107,7 +106,6 @@
                        <li class="disabled"><span>»</span></li>
                      {% endif %}
                    </ul>
-                 {% endif %}}
 
                 </div>
             </div>

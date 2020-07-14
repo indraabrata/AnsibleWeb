@@ -7,8 +7,8 @@
             <div class="row">
                 <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
                   <div class="page-header">
-                    <h2 class="pageheader-title">VLAN</h2>
-                    <p class="pageheader-text">Create VLAN on device network</p>
+                    <h2 class="pageheader-title">IP Address Static</h2>
+                    <p class="pageheader-text">Configure IP Address Static</p>
                   </div>
                 </div>
               </div>
@@ -30,20 +30,18 @@
                     </div>
                 </div>
             </div>
-            {{ formset.management_form }}
-            {% for form in formset %}
+            {{ ipset.management_form }}
+            {% for form in ipset %}
             <div class="card-body">
                 <div class="row form-row spacer">
                     <div class="col-4">
-                        <label>Create Vlan</label>
+                        <label>Add IP Address</label>
                     </div>
                     <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12 ">
                         <div class="input-group">
-                            {% render_field form.vlan_id class="form-control form-fix-size" placeholder="vlan id" required='required' %}
-                        <span class="mr-1"></span>
-                            {% render_field form.vlan_name class="form-control form-fix-size" placeholder="vlan name" required='required' %}
-                            <span class="mr-1"></span>
                             {% render_field form.interface class="form-control form-fix-size" placeholder="interface" required='required' %}
+                        <span class="mr-1"></span>
+                            {% render_field form.ip_add class="form-control form-fix-size" placeholder="ip address" required='required' %}
                             <div class="input-group-append">
                                 <button class="btn btn-success add-form-row">+</button>
                               </div>

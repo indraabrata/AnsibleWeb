@@ -32,6 +32,7 @@ ALLOWED_HOSTS = ['192.168.100.145']
 # Application definition
 
 INSTALLED_APPS = [
+    'widget_tweaks',
     'Automation.apps.AutomationConfig',
     'users.apps.UsersConfig',
     'crispy_forms',

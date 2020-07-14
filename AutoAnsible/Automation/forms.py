@@ -105,13 +105,23 @@ class autoconfig(forms.Form):
     hosts = forms.ModelChoiceField(queryset=AnsibleNetworkHost.objects.all())
 
 
-class host_huawei(forms.Form):
-    oss = AnsibleNetworkGroup.objects.all().filter(ansible_network_os='ios')
-    os = oss[0]
-    hosts = forms.ModelChoiceField(queryset=AnsibleNetworkHost.objects.all().filter(group_id=os), to_field_name="host")
+class host_all(forms.Form):
+    hosts = forms.ModelChoiceField(queryset=AnsibleNetworkHost.objects.all(), to_field_name="host")
 
 class vlan(forms.Form):
-    vlan_id = forms.CharField()
-    vlan_name = forms.CharField()
+    vlan_id = forms.CharField(required=False)
+    vlan_name = forms.CharField(required=False)
+    interface = forms.CharField(required=False)
+
+class vlan_int(forms.Form):
+    int_vlan = forms.CharField(required=False)
+    c_vlan = forms.CharField(required=False)
+
+class ip_static(forms.Form):
+    interface = forms.CharField(required=False)
+    ip_add = forms.CharField(required=False)
+
+ip_staticset = formset_factory(ip_static, extra=1)
     
 vlanset = formset_factory(vlan, extra=1)
+vlanint = formset_factory(vlan_int, extra=1)
