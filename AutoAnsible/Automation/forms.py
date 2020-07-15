@@ -121,6 +121,20 @@ class ip_static(forms.Form):
     interface = forms.CharField(required=False)
     ip_add = forms.CharField(required=False)
 
+class ospf(forms.Form):
+    area = forms.CharField(required=False)
+    network = forms.CharField(required=False)
+
+class dhcp(forms.Form):
+    pool = forms.CharField(required=False)
+    interface = forms.CharField(required=False)
+    network = forms.CharField(required=False)
+    mask = forms.CharField(required=False)
+    gateway = forms.CharField(required=False)
+    excluded = forms.CharField(required=False)
+
+dhcpset = formset_factory(dhcp, extra=1)
+ospfset = formset_factory(ospf, extra=1)
 ip_staticset = formset_factory(ip_static, extra=1)
     
 vlanset = formset_factory(vlan, extra=1)

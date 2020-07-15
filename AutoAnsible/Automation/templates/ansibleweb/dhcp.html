@@ -7,8 +7,8 @@
             <div class="row">
                 <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
                   <div class="page-header">
-                    <h2 class="pageheader-title">IP Address Static</h2>
-                    <p class="pageheader-text">Configure IP Address Static</p>
+                    <h2 class="pageheader-title">DHCP</h2>
+                    <p class="pageheader-text">Configure Dynamic Ip Address</p>
                   </div>
                 </div>
               </div>
@@ -30,18 +30,24 @@
                     </div>
                 </div>
             </div>
-            {{ ipset.management_form }}
-            {% for form in ipset %}
+            {{ formset.management_form }}
+            {% for form in formset %}
             <div class="card-body">
                 <div class="row form-row spacer">
                     <div class="col-4">
-                        <label>Add IP Address</label>
+                        <label>DHCP Server</label>
                     </div>
                     <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12 ">
                         <div class="input-group">
-                            {% render_field form.interface class="form-control form-fix-size" placeholder="interface" required='required' %}
+                            {% render_field form.pool class="form-control form-fix-size" placeholder="pool" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form.gateway class="form-control form-fix-size" placeholder="ip gateway" required='required' %}
                         <span class="mr-1"></span>
-                            {% render_field form.ip_add class="form-control form-fix-size" placeholder="ip address" required='required' %}
+                            {% render_field form.network class="form-control form-fix-size" placeholder="network" required='required' %}
+                        <span class="mr-1"></span>
+                            {% render_field form.mask class="form-control form-fix-size" placeholder="mask" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form.excluded class="form-control form-fix-size" placeholder="IP excluded" required='required' %}
                             <div class="input-group-append">
                                 <button class="btn btn-success add-form-row">+</button>
                               </div>

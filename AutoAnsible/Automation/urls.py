@@ -4,7 +4,7 @@ from . import views
 from users import views as user_views
 from django.conf import settings
 from django.conf.urls.static import static
-from .views import PostInventoryGroup, conf_vlan, PostInventoryHost, namecisco, vlancisco, ospfcisco, backupcisco, restorecisco, namehuawei, ospfhuawei, ivlan_huawei, backuphuawei, namemikrotik, ipaddmtk, ospf_mikrotik, backupmikrotik, topologi, restorehuawei, restoremikrotik, infodevice, addportdevice, prekonfig, prenewdevice,arpconfig
+from .views import PostInventoryGroup, dhcp_all, ipstatic, ospf_all, conf_vlan, PostInventoryHost, namecisco, vlancisco, ospfcisco, backupcisco, restorecisco, namehuawei, ospfhuawei, ivlan_huawei, backuphuawei, namemikrotik, ipaddmtk, ospf_mikrotik, backupmikrotik, topologi, restorehuawei, restoremikrotik, infodevice, addportdevice, prekonfig, prenewdevice,arpconfig
 
 urlpatterns = [
     path('', views.home, name='Ansible-home'),
@@ -17,6 +17,8 @@ urlpatterns = [
     path('host/', views.addhost, name='host-create'),
     path('vlan/', views.conf_vlan, name='vlan'),
     path('ipstatic/', views.ipstatic, name='ipstatic'),
+    path('ospf/', views.ospf_all, name='ospf'),
+    path('dhcp/', views.dhcp_all, name='dhcp'),
     path('playbook/', views.addPlaybook, name='playbook-create'),
     path('about/', views.about, name='Ansible-about'),
     path('addportdevice/', views.addportdevice, name='port-device'),
