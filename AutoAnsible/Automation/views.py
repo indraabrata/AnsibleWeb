@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from users.forms import UserRegisterForm
 from django.contrib.auth.decorators import login_required
-from .models import PostInventoryGroup, PostInventoryHost ,PostPlayBookForm, TaskForm, log, group, addinfodevice , ios_router, preconfdevice, arp, ce_router_form, ce_router, kamusport, ios_switch, ios_switch_form, devices, iosrouter, ce_switch, ce_switch_form, routeros_router, routeros_router_form
+from .models import mac_os, PostInventoryGroup, PostInventoryHost ,PostPlayBookForm, TaskForm, log, group, addinfodevice , ios_router, preconfdevice, arp, ce_router_form, ce_router, kamusport, ios_switch, ios_switch_form, devices, iosrouter, ce_switch, ce_switch_form, routeros_router, routeros_router_form
 from .forms import hostnamecisco, dhcpset, ospfset, ip_staticset, vlanint, vlan_cisco, ospf_cisco, ciscobackup, ciscorestore, hostnamehuawei, ospf_huawei, intervlan_huawei, huaweibackup, hostnamemikrotik, ipaddmikrotik, ospf_mikrotik, mikrotikbackup, huaweirestore, mikrotikrestore, autoconfig , vlanset, host_all
 from django.contrib import messages
 from django.db.models.fields.related import ManyToManyField
@@ -43,7 +43,9 @@ posts = [
 @login_required
 def home(request):
     all_device = AnsibleNetworkHost.objects.all()
-    logs = log.objects.all()
+    failure = log.objects.all().filter(status='Failed')
+    successful = log.objects.all().filter(status='Success')
+    logs = log.objects.all().order_by('-time')
     coba = request.GET.get('page', 1)
 
     paginator = Paginator(logs, 10)
@@ -56,6 +58,8 @@ def home(request):
 
     context = {
         'all_device': len(all_device),
+        'failure': len(failure),
+        'successful': len(successful),
         'pages': pages
     }
     return render(request, 'ansibleweb/home.html', context)
@@ -1081,12 +1085,13 @@ def arpconfig(request):
         form = autoconfig(request.GET, request.user)
         if form.is_valid():
             data = request.GET
+            host = data['hosts']
             akun = request.user
             print(request.GET)
             device = data['hosts']
             t1 = threading.Thread(target=autoconf, args=[device, akun])
             t1.start()
-            logs = log(account=akun, targetss=data['hosts'], action="Auto Configuration", status="PENDING", time=datetime.now(), messages="No Error")
+            logs = log(account=akun, targetss=host.host, action="Auto Configuration", status="PENDING", time=datetime.now(), messages="No Error")
             logs.save()
             messages.success(request, f'Starting AutoConfiguration!')
             context = {
@@ -1126,6 +1131,8 @@ def autoconf(device, akun):
                 )
             result = execute(my_play)
             condition = result.stats
+            mac_booked = []
+            mac_arp = []
             con = condition['hosts'][0]['status']
             if con == 'ok':
                 output = result.results
@@ -1141,27 +1148,54 @@ def autoconf(device, akun):
                                 device_id=host)
                     coba.save()
                 bookeds = devices.objects.filter(device_id=device, stats='Booked').values_list('new_device_mac')
+                m_max = len(bookeds)
+                for z in range(0, m_max):
+                    del_1 = bookeds[z][0].replace("-","")
+                    del_2 = del_1.replace(".","")
+                    del_3 = del_2.replace(":","")
+                    del_4 = del_3.lower()#dlm bentukk aabbccddeeff
+                    mac_filter = del_4[:4]+"."+del_4[4:8]+"."+del_4[8:]#dlm bentuk aabb.ccdd.eeff
+                    mac_booked.append(mac_filter)
                 arps = arp.objects.filter(device_id=device).values_list('mac')
-                match = arps.intersection(bookeds)
+                a_max = len(arps)
+                for y in range(0, a_max):
+                    del1 = arps[y][0]
+                    mac_arp.append(del1)
+                inter = set.intersection(set(mac_arp), set(mac_booked))
+                match = list(inter)
                 jumlah = len(match)
                 if jumlah > 0:
                     ulang = False
                     for z in range(0, jumlah):
-                        findmac = match[z][0]
+                        findmac = match[z]#dlm bentuk aabb.ccdd.eeff
+                        get1 = findmac.replace("-","")
+                        get2 = get1.replace(".","")
+                        get3 = get2.replace(":","")
+                        get4 = get3.upper()#dlm bentuk AABBCCDDEEFF
+                        get5 = get4[:6]#dlm bentuk AABBCC
+                        get6 = get5[:2]+":"+get5[2:4]+":"+get5[4:6]#dlm bentuk AA:BB:CC
+                        findos = mac_os.objects.filter(oui=get6).values_list('vendor')
+                        t_os = findos[0][0]#dapat vendor
+                        ios_mac = get4.lower()#dlm bentuk aabbccddeeff
+                        ios_macs = ios_mac[:4]+"."+ios_mac[4:8]+"."+ios_mac[8:]#bentuk aabb.ccdd.eeff untuk ios
                         getportarp = arp.objects.filter(device_id=device, mac=findmac).values_list('port')
-                        portarpp = getportarp[0][0] 
-                        cekkamus = kamusport.objects.get(portarp=portarpp)
-                        port_out = cekkamus.portint
-                        cekking = devices.objects.filter(device_id=device, stats='Booked', new_device_mac=findmac, port=port_out)
-                        matching = len(cekking)
+                        portarpp = getportarp[0][0]#'GigabitEthernet0/0/1'
+                        cekking = devices.objects.filter(device_id=device, stats='Booked', port=portarpp).values_list('new_device_mac')
+                        convert_mac = cekking[0][0]
+                        c_1 = convert_mac.replace("-","")
+                        c_2 = c_1.replace(".","")
+                        c_3 = c_2.replace(":","")
+                        c_4 = c_3.lower()
+                        c_5 = c_4[:4]+"."+c_4[4:8]+"."+c_4[8:]#dlm bentuk ios aabb.ccdd.eeff
+                        print(c_5)
+                        matching = c_5 in findmac
                         os_type = devices.objects.filter(new_device_mac=findmac).values_list('new_device_os')
-                        t_os = os_type[0][0]
                         de_type = devices.objects.filter(new_device_mac=findmac).values_list('new_device_type')
                         dtype = de_type[0][0]
                         add_ip = arp.objects.filter(mac=findmac).values_list('ipadd')
-                        precon = devices.objects.filter(new_device_mac=findmac).values_list('preconf')
+                        precon = devices.objects.filter(new_device_mac=c_5).values_list('preconf')
                         cons = precon[0][0]
-                        if t_os == 'ios' and dtype == 'router' and matching > 0:
+                        if "Cisco" in t_os and dtype == 'router' and matching == 'True':
                             savehost = AnsibleNetworkHost(host=cons,
                                                 ansible_ssh_host=add_ip,
                                                 ansible_user='indra',
@@ -1191,11 +1225,11 @@ def autoconf(device, akun):
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
                                 devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
                                 fail = result.results
                                 err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
                                 print(f'{err}')
                         elif t_os == 'ios' and dtype == 'switch' and matching > 0:
                             savehost = AnsibleNetworkHost(host=cons,
@@ -1226,11 +1260,11 @@ def autoconf(device, akun):
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
                                 devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
                                 fail = result.results
                                 err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
                                 print(f'{err}')
                         elif t_os == 'ce' and dtype == 'router' and matching > 0:
                             savehost = AnsibleNetworkHost(host=cons,
@@ -1261,11 +1295,11 @@ def autoconf(device, akun):
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
                                 devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
                                 fail = result.results
                                 err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
                                 print(f'{err}')
                         elif t_os == 'ce' and dtype == 'switch' and matching > 0:
                             savehost = AnsibleNetworkHost(host=cons,
@@ -1300,11 +1334,11 @@ def autoconf(device, akun):
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
                                 devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
                                 fail = result.results
                                 err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
                                 print(f'{err}')
                         elif t_os == 'routeros' and dtype == 'router' and matching > 0:
                             savehost = AnsibleNetworkHost(host=cons,
@@ -1337,12 +1371,14 @@ def autoconf(device, akun):
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
                                 devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
                                 fail = result.results
                                 err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
                                 print(f'{err}')
+                        else:
+                            logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages='Port Tidak Sesuai')
         elif os == 'ce':
             arp.objects.filter(device_id=device).delete()
             my_play = dict(
@@ -1362,6 +1398,8 @@ def autoconf(device, akun):
             print(my_play)
             condition = result.stats
             print(condition)
+            mac_booked = []
+            mac_arp = []
             con = condition['hosts'][0]['status']
             print(con)
             if con == 'ok':
@@ -1378,8 +1416,21 @@ def autoconf(device, akun):
                                 device_id=host)
                     coba.save()
                 bookeds = devices.objects.filter(device_id=device, stats='Booked').values_list('new_device_mac')
+                m_max = len(bookeds)
+                for z in range(0, m_max):
+                    del_1 = bookeds[z][0].replace("-","")
+                    del_2 = del_1.replace(".","")
+                    del_3 = del_2.replace(":","")
+                    del_4 = del_3.lower()
+                    mac_filter = del_4[:4]+"-"+del_4[4:8]+"-"+del_4[8:]
+                    mac_booked.append(mac_filter)
                 arps = arp.objects.filter(device_id=device).values_list('mac')
-                match = arps.intersection(bookeds)
+                a_max = len(arps)
+                for y in range(0, a_max):
+                    del1 = arps[y][0]
+                    mac_arp.append(del1)
+                inter = set.intersection(set(mac_arp), set(mac_booked))
+                match = list(inter)
                 print(bookeds)
                 print(arps)
                 print(match)
@@ -1387,28 +1438,53 @@ def autoconf(device, akun):
                 if jumlah > 0:
                     ulang = False
                     for z in range(0, jumlah):
-                        findmac = match[z][0]
+                        findmac = match[z]
+                        get1 = findmac.replace("-","")
+                        get2 = get1.replace(".","")
+                        get3 = get2.replace(":","")
+                        get4 = get3.upper()
+                        get5 = get4[:6]
+                        get6 = get5[:2]+":"+get5[2:4]+":"+get5[4:6]
+                        findos = mac_os.objects.filter(oui=get6).values_list('vendor')
+                        t_os = findos[0][0]
                         print(findmac)
                         getportarp = arp.objects.filter(device_id=device, mac=findmac).values_list('port')
                         portarpp = getportarp[0][0] 
                         cekkamus = kamusport.objects.get(portarp=portarpp)
                         port_out = cekkamus.portint
                         print(port_out)
-                        cekking = devices.objects.filter(device_id=device, stats='Booked', new_device_mac=findmac, port=port_out)
-                        matching = len(cekking)
-                        os_type = devices.objects.filter(new_device_mac=findmac).values_list('new_device_os')
-                        t_os = os_type[0][0]
-                        de_type = devices.objects.filter(new_device_mac=findmac).values_list('new_device_type')
+                        cekking = devices.objects.filter(device_id=device, stats='Booked', port=port_out).values_list('new_device_mac')
+                        convert_mac = cekking[0][0]
+                        c_1 = convert_mac.replace("-","")
+                        c_2 = c_1.replace(".","")
+                        c_3 = c_2.replace(";","")
+                        c_4 = c_3.lower()
+                        c_5 = c_4[:4]+"-"+c_4[4:8]+"-"+c_4[8:]
+                        print(c_5)
+                        matching = c_5 in findmac
+                        de_type = devices.objects.filter(device_id=device, stats='Booked', port=port_out).values_list('new_device_type')
                         dtype = de_type[0][0]
                         add_ip = arp.objects.filter(mac=findmac).values_list('ipadd')
-                        precon = devices.objects.filter(new_device_mac=findmac).values_list('preconf')
+                        add_ip_ok = add_ip[0][0] 
+                        print(add_ip_ok)
+                        precon = devices.objects.filter(device_id=device, stats='Booked', port=port_out).values_list('preconf')
                         cons = precon[0][0]
                         print(cons)
                         print(t_os)
-                        if t_os == 'ios' and dtype == 'router' and matching > 0:
+                        print(matching)
+                        print(dtype)
+                        print(host.group)
+                        Huawei_os = "Huawei" in t_os
+                        Cisco_os = "Cisco" in t_os
+                        Mikrotik_os= "Mikrotik" in t_os
+                        print(Huawei_os)
+                        print(Cisco_os)
+                        print(Mikrotik_os)
+                        if Cisco_os == True and dtype == 'router' and matching == True:
+                            print('dicisco')
                             savehost = AnsibleNetworkHost(host=cons,
-                                                ansible_ssh_host=add_ip,
-                                                ansible_user='indra',
+                                                ansible_ssh_host=add_ip_ok,
+                                                ansible_user='admin',
                                                 ansible_ssh_pass='cisco',
                                                 ansible_become_pass='cisco',
                                                 device_type=de_type,
@@ -1434,23 +1510,24 @@ def autoconf(device, akun):
                             kondisi = result.stats
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
-                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                                devices.objects.filter(port=port_out).update(stats='configured')
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
                                 fail = result.results
                                 err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
                                 print(f'{err}')
-                        elif t_os == 'ce' and dtype == 'router' and matching > 0:
+                        elif Huawei_os == True and dtype == 'router' and matching == True:
+                            print("huawei router")
                             savehost = AnsibleNetworkHost(host=cons,
-                                                ansible_ssh_host=add_ip,
+                                                ansible_ssh_host=add_ip_ok,
                                                 ansible_user='admin',
                                                 ansible_ssh_pass='54541691',
                                                 ansible_become_pass='54541691',
                                                 device_type=de_type,
                                                 group=host.group)
                             savehost.save()
-                            print(host)
+                            print(savehost)
                             conf = ce_router.objects.get(name=cons)
                             my_play = dict(
                                     name="hostname",
@@ -1472,16 +1549,17 @@ def autoconf(device, akun):
                             kondisi = result.stats
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
-                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                                devices.objects.filter(port=port_out).update(stats='configured')
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
                                 fail = result.results
                                 err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
                                 print(f'{err}')
-                        elif t_os == 'ce' and dtype == 'switch' and matching > 0:
+                        elif Huawei_os == True and dtype == 'switch' and matching == True:
+                            print('huawei switch')
                             savehost = AnsibleNetworkHost(host=cons,
-                                                ansible_ssh_host=add_ip,
+                                                ansible_ssh_host=add_ip_ok,
                                                 ansible_user='admin',
                                                 ansible_ssh_pass='54541691',
                                                 ansible_become_pass='54541691',
@@ -1511,17 +1589,18 @@ def autoconf(device, akun):
                             kondisi = result.stats
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
-                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                                devices.objects.filter(port=port_out).update(stats='configured')
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
                                 fail = result.results
                                 err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
                                 print(f'{err}')
-                        elif t_os == 'ios' and dtype == 'switch' and matching > 0:
+                        elif Cisco_os == True and dtype == 'switch' and matching == True:
+                            print('cisco switch')
                             savehost = AnsibleNetworkHost(host=cons,
-                                                    ansible_ssh_host=add_ip,
-                                                    ansible_user='indra',
+                                                    ansible_ssh_host=add_ip_ok,
+                                                    ansible_user='admin',
                                                     ansible_ssh_pass='cisco',
                                                     ansible_become_pass='cisco',
                                                     device_type=de_type,
@@ -1546,16 +1625,17 @@ def autoconf(device, akun):
                             kondisi = result.stats
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
-                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                                devices.objects.filter(port=port_out).update(stats='configured')
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
                                 fail = result.results
                                 err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
                                 print(f'{err}')
-                        elif t_os == 'routeros' and dtype == 'router' and matching > 0:
+                        elif Mikrotik_os == True and dtype == 'router' and matching == True:
+                            print('mikrotik router')
                             savehost = AnsibleNetworkHost(host=cons,
-                                                    ansible_ssh_host=add_ip,
+                                                    ansible_ssh_host=add_ip_ok,
                                                     ansible_user='mikrotik',
                                                     ansible_ssh_pass='54541691',
                                                     ansible_become_pass='54541691',
@@ -1583,12 +1663,12 @@ def autoconf(device, akun):
                             kondisi = result.stats
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
-                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                                devices.objects.filter(port=port_out).update(stats='configured')
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
                                 fail = result.results
                                 err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
                                 print(f'{err}')
         elif os == 'routeros':
             arp.objects.filter(device_id=device).delete()
@@ -1679,12 +1759,12 @@ def autoconf(device, akun):
                             kondisi = result.stats
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
-                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                                devices.objects.filter(port=port_out).update(stats='configured')
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
                                 fail = result.results
                                 err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
                                 print(f'{err}')
                         elif t_os == 'ce' and dtype == 'router' and matching > 0:
                             savehost = AnsibleNetworkHost(host=cons,
@@ -1717,12 +1797,12 @@ def autoconf(device, akun):
                             kondisi = result.stats
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
-                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                                devices.objects.filter(port=port_out).update(stats='configured')
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
                                 fail = result.results
                                 err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
                                 print(f'{err}')
                         elif t_os == 'ce' and dtype == 'switch' and matching > 0:
                             savehost = AnsibleNetworkHost(host=cons,
@@ -1756,12 +1836,12 @@ def autoconf(device, akun):
                             kondisi = result.stats
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
-                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                                devices.objects.filter(port=port_out).update(stats='configured')
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
                                 fail = result.results
                                 err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
                                 print(f'{err}')
                         elif t_os == 'ios' and dtype == 'switch' and matching > 0:
                             savehost = AnsibleNetworkHost(host=cons,
@@ -1791,12 +1871,12 @@ def autoconf(device, akun):
                             kondisi = result.stats
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
-                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                                devices.objects.filter(port=port_out).update(stats='configured')
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
                                 fail = result.results
                                 err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
                                 print(f'{err}')
                         elif t_os == 'routeros' and dtype == 'router' and matching > 0:
                             savehost = AnsibleNetworkHost(host=cons,
@@ -1828,12 +1908,12 @@ def autoconf(device, akun):
                             kondisi = result.stats
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
-                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                                devices.objects.filter(port=port_out).update(stats='configured')
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
                                 fail = result.results
                                 err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=device, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
                                 print(f'{err}')
 
 

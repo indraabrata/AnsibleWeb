@@ -236,6 +236,16 @@ class routeros_router_form(forms.Form):
     ip_add_vlan = forms.CharField()
     interface_vlan = forms.CharField()
 
+class mac_os(models.Model):
+    oui = models.CharField(max_length=50)
+    vendor = models.CharField(max_length=50)
+
+    @classmethod
+    def create(cls, **kwargs):
+        macos= cls.objects.create(
+            oui=kwargs['oui'],
+            vendor=kwargs['vendor']
+        )
 
 
 
