@@ -33,7 +33,7 @@ class ciscobackup(forms.Form):
     hosts = forms.ModelChoiceField(queryset=AnsibleNetworkGroup.objects.all().filter(ansible_network_os='ios'), to_field_name="name")
 
 class ciscorestore(forms.Form):
-    hosts = forms.ModelChoiceField(queryset=AnsibleNetworkGroup.objects.all().filter(ansible_network_os='ios'), to_field_name="name")
+    hosts = forms.ModelChoiceField(queryset=AnsibleNetworkHost.objects.all(), to_field_name="host")
 
 #HUAWEI FORM ----------------------------------------
 
@@ -58,8 +58,8 @@ class intervlan_huawei(forms.Form):
     ipadd = forms.CharField()
     cmd = forms.CharField()
 
-class huaweibackup(forms.Form):
-    hosts = forms.ModelChoiceField(queryset=AnsibleNetworkGroup.objects.all().filter(ansible_network_os='ce'), to_field_name="name")
+class backupall(forms.Form):
+    hosts = forms.ModelChoiceField(queryset=AnsibleNetworkGroup.objects.all(), to_field_name="name")
 
 class huaweirestore(forms.Form):
     hosts = forms.ModelChoiceField(queryset=AnsibleNetworkGroup.objects.all().filter(ansible_network_os='ce'), to_field_name="name")
@@ -132,6 +132,14 @@ class dhcp(forms.Form):
     mask = forms.CharField(required=False)
     gateway = forms.CharField(required=False)
     excluded = forms.CharField(required=False)
+
+class intervlan(forms.Form):
+    interface = forms.CharField(required=False)
+    address = forms.CharField(required=False)
+    enc = forms.CharField(required=False)
+    mask = forms.CharField(required=False)
+
+ivlanset = formset_factory(intervlan, extra=1)
 
 dhcpset = formset_factory(dhcp, extra=1)
 ospfset = formset_factory(ospf, extra=1)

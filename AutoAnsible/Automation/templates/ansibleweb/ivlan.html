@@ -1,0 +1,84 @@
+{% extends "ansibleweb/base.html" %}
+{% block content %}
+    {% load crispy_forms_tags %}
+    {% load widget_tweaks %}
+    <section class="dashboard-counts section-padding">
+        <div class="container fluid dashboard-content">
+            <div class="row">
+                <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+                  <div class="page-header">
+                    <h2 class="pageheader-title">InterVLAN</h2>
+                    <p class="pageheader-text">Create InterVLAN on device network</p>
+                  </div>
+                </div>
+              </div>
+          <div class="row d-flex align-items-md-stretch">
+            <div class="col-lg-6 align-items-center">
+           <div class="card">
+          <form method="POST" class="text-left">
+               {% csrf_token %}
+               <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>Select Device</label>
+                    </div>
+                    <div class="col-4">
+                        <div class="input-group">
+                            {{form_host.hosts}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{ formset.management_form }}
+            {% for form in formset %}
+            <div class="card-body">
+                <div class="row form-row spacer">
+                    <div class="col-4">
+                        <label>Create Vlan</label>
+                    </div>
+                    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12 ">
+                        <div class="input-group">
+                            {% render_field form.interface class="form-control form-fix-size" placeholder="interface" required='required' %}
+                        <span class="mr-1"></span>
+                            {% render_field form.address class="form-control form-fix-size" placeholder="ip address" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form.mask class="form-control form-fix-size" placeholder="subnet mask" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form.enc class="form-control form-fix-size" placeholder="encapsulation" required='required' %}
+                            <div class="input-group-append">
+                                <button class="btn btn-success add-form-row">+</button>
+                              </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+             <div class="form-group text-center">
+                <div class="row justify-content-start">
+                    <div class="mx-auto" style="width: 200px;">
+                        <input type="submit" class="btn btn-primary btn-block" value="Run" name="btnform1" />
+            </div>
+            </div>
+        </div>
+        </form>
+        </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <h4>Result Task</h4>
+                </div>
+                <div class="card-body">
+                    {{output}}
+                </div>
+            </div>
+            
+        </div>
+                
+            </div>
+    </div>
+    </div>
+  </section>
+      {% endblock content %}

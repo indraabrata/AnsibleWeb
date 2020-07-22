@@ -61,17 +61,11 @@
                   <li><a href="{% url 'ipstatic' %}">IP Static</a></li>
                   <li><a href="{% url 'dhcp' %}">DHCP</a></li>
                   <li><a href="{% url 'ospf' %}">OSPF</a></li>
-                  <li><a href="{% url 'ospf' %}">InterVLAN</a></li>
+                  <li><a href="{% url 'ivlan' %}">InterVLAN</a></li>
                   <li><a href="{% url 'vlan' %}">VLAN</a></li>
                 </ul>
               </li>
-            <li><a href="#exampledropdownDropdown" aria-expanded="false" data-toggle="collapse"> <i class="icon-interface-windows"></i>Backup Device </a>
-              <ul id="exampledropdownDropdown" class="collapse list-unstyled ">
-                <li><a href="{% url 'backup-cisco' %}">Cisco</a></li>
-                <li><a href="{% url 'backup-mikrotik' %}">Mikrotik</a></li>
-                <li><a href="{% url 'backup-huawei' %}">Huawei</a></li>
-              </ul>
-            </li>
+              <li><a href="{% url 'backup' %}"> <i class="icon-form"></i>Backup</a></li>
             <li><a href="{% url 'restore-cisco' %}"> <i class="icon-form"></i>Restore</a></li>
             <li><a href="{% url 'arp' %}"> <i class="icon-form"></i>AutoConfig</a></li>
             </ul>
