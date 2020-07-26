@@ -42,6 +42,8 @@
                             {% render_field form.area class="form-control form-fix-size" placeholder="area" required='required' %}
                         <span class="mr-1"></span>
                             {% render_field form.network class="form-control form-fix-size" placeholder="network" required='required' %}
+                        <span class="mr-1"></span>
+                            {% render_field form.mask class="form-control form-fix-size" placeholder="wildmask" required='required' %}
                             <div class="input-group-append">
                                 <button class="btn btn-success add-form-row">+</button>
                               </div>
@@ -67,7 +69,9 @@
                     <h4>Result Task</h4>
                 </div>
                 <div class="card-body">
-                    {{output}}
+                    {% for hasil in output%}
+                        {{ hasil }}
+                    {% endfor %}
                 </div>
             </div>
             

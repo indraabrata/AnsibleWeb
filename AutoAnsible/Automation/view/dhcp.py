@@ -23,7 +23,7 @@ def dhcp_all(request):
         if form_host.is_valid() and formset.is_valid():
             output = []
             data = request.POST
-            akun = request.akun
+            akun = request.user
             hoss = AnsibleNetworkHost.objects.get(host=data['hosts'])
             os = hoss.group.ansible_network_os
             if os == 'ce':
@@ -45,7 +45,7 @@ def dhcp_all(request):
                         ],
                         tasks=[
                             dict(action=dict(module='ce_config', lines=['dhcp enable', 'ip pool '+pool, 'network '+network+' mask '+mask, 'gateway-list '+gateway, 'excluded-ip-address '+excluded])),
-                            dict(action=dict(module='ce_config', lines=['int '+interface, 'ip add '+gateway+' 24', 'dhcp select interface']))
+                            dict(action=dict(module='ce_config', lines=['int '+interface, 'ip add '+gateway+' 24', 'dhcp select interface', 'undo sh']))
                         ]
                     )
                     print(my_play)
@@ -144,7 +144,7 @@ def dhcp_all(request):
                         tasks=[
                             dict(action=dict(module='ios_config', lines=['network +'+network+' '+mask, 'default-router '+gateway], parents='ip dhcp pool '+pool)),
                             dict(action=dict(module='ios_config', lines=['ip dhcp excluded-address '+excluded])),
-                            dict(action=dict(module='ios_config', lines=['ip add '+gateway+' '+mask], parents='int '+interface))
+                            dict(action=dict(module='ios_config', lines=['ip add '+gateway+' '+mask, 'no sh'], parents='int '+interface))
                         ]
                     )
                     print(my_play)
@@ -167,6 +167,7 @@ def dhcp_all(request):
                         logs.save()
                         gagal = "Device   :"+hos+"    Output:"+err
                         output.append(gagal)
+                    messages.success(request, output)
                 context = {
                     'form_host': form_host,
                     'formset': formset,

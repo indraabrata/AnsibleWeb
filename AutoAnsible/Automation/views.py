@@ -107,10 +107,12 @@ def updatedevice(request, pk):
 
 def infodevice(request, pk):
     perangkat = AnsibleNetworkHost.objects.get(id=pk)
+    namehost = perangkat.host
     info = devices.objects.all().filter(device_id=perangkat)
 
     context = {
         'perangkat': perangkat,
+        'namehost': namehost,
         'info': info
     }
     return render(request, 'ansibleweb/infodevice.html', context)
@@ -122,7 +124,11 @@ def deletegroup(request, id):
 
 def deletedevice(request, id):
     device = AnsibleNetworkHost.objects.get(pk=id)
+    deleted = device.host
+    akun = request.user
     device.delete()
+    logs = log(account=akun, targetss=deleted, action="Delete Device", status="Success",time=datetime.now(), messages="No Error")
+    logs.save()
     return redirect('device')
 
 def prenewdevice(request, pk):

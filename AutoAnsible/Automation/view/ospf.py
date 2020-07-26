@@ -30,6 +30,7 @@ def ospf_all(request):
                 for form in ospfs:
                     area = form.cleaned_data.get('area')
                     network = form.cleaned_data.get('network')
+                    mask = form.cleaned_data.get('mask')
                     my_play = dict(
                         name="Config OSPF",
                         hosts=data['hosts'],
@@ -40,7 +41,7 @@ def ospf_all(request):
                             dict(ansible_command_timeout=120)
                         ],
                         tasks=[
-                            dict(action=dict(module='ce_config', lines=['ospf', 'area '+area, 'network '+network]))
+                            dict(action=dict(module='ce_config', lines=['ospf', 'area '+area, 'network '+network+' '+mask]))
                         ]
                     )
                     print(my_play)
@@ -73,6 +74,7 @@ def ospf_all(request):
                 for form in ospfs:
                     area = form.cleaned_data.get('area')
                     network = form.cleaned_data.get('network')
+                    mask = form.cleaned_data.get('mask')
                     my_play = dict(
                         name="Config OSPF",
                         hosts=data['hosts'],
@@ -83,7 +85,7 @@ def ospf_all(request):
                             dict(ansible_command_timeout=120)
                         ],
                         tasks=[
-                            dict(action=dict(module='ios_config', lines=['network '+network+' area'+area], parents='router ospf 1'))
+                            dict(action=dict(module='ios_config', lines=['network '+network+' '+mask+' area '+area], parents='router ospf 1'))
                         ]
                     )
                     print(my_play)
@@ -116,6 +118,7 @@ def ospf_all(request):
                 for form in ospfs:
                     area = form.cleaned_data.get('area')
                     network = form.cleaned_data.get('network')
+                    mask = form.cleaned_data.get('mask')
                     my_play = dict(
                         name="Config OSPF",
                         hosts=data['hosts'],
@@ -126,7 +129,7 @@ def ospf_all(request):
                             dict(ansible_command_timeout=120)
                         ],
                         tasks=[
-                            dict(action=dict(module='routeros_command', commands='/routing ospf network add network='+network+' area='+area))
+                            dict(action=dict(module='routeros_command', commands='/routing ospf network add network='+network+'/'+mask+' area='+area))
                         ]
                     )
                     print(my_play)

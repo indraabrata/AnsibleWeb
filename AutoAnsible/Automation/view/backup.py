@@ -5,11 +5,11 @@ from django.http import HttpResponse
 from users.forms import UserRegisterForm
 from django.contrib.auth.decorators import login_required
 from ..models import mac_os, PostInventoryGroup, PostInventoryHost ,PostPlayBookForm, TaskForm, log, group, addinfodevice , ios_router, preconfdevice, arp, ce_router_form, ce_router, kamusport, ios_switch, ios_switch_form, devices, iosrouter, ce_switch, ce_switch_form, routeros_router, routeros_router_form
-from ..forms import ivlanset, hostnamecisco, dhcpset, ospfset, ip_staticset, vlanint, vlan_cisco, ospf_cisco, ciscobackup, ciscorestore, hostnamehuawei, ospf_huawei, intervlan_huawei, backupall, hostnamemikrotik, ipaddmikrotik, ospf_mikrotik, mikrotikbackup, huaweirestore, mikrotikrestore, autoconfig , vlanset, host_all
+from ..forms import ivlanset, backupset, hostnamecisco, dhcpset, ospfset, ip_staticset, vlanint, vlan_cisco, ospf_cisco, ciscobackup, ciscorestore, hostnamehuawei, ospf_huawei, intervlan_huawei, backupall, hostnamemikrotik, ipaddmikrotik, ospf_mikrotik, mikrotikbackup, huaweirestore, mikrotikrestore, autoconfig , vlanset, host_all
 from django.contrib import messages
 #from djansible.models import PlayBooks
 from itertools import chain
-from dj_ansible.models import AnsibleNetworkHost
+from dj_ansible.models import AnsibleNetworkHost, AnsibleNetworkGroup
 from dj_ansible.ansible_kit import execute  
 import json
 from datetime import datetime
@@ -20,7 +20,7 @@ from django.contrib.auth.models import User
 
 def backup_all(request):
     if request.method=='POST':
-        backup = backupall(request.POST, request.user)
+        backup = backupset(request.POST, request.user)
         if backup.is_valid():
             print(request.POST)
             data = request.POST
@@ -30,16 +30,16 @@ def backup_all(request):
             os = grup[0][0]
             t1 = threading.Thread(target=backup_act, args=[target, akun, os])
             t1.start()
-            logs = log(account=akun, targetss=data['hosts'], action="Backup Configuration", status="PENDING", time=datetime.now(), messages="No Error")
+            logs = log(account=akun, targetss=data['hosts'], action="Backup Configuration "+target, status="PENDING", time=datetime.now(), messages="No Error")
             logs.save()
-            messages.success(request, f'Starting AutoConfiguration!')
+            messages.success(request, f'Starting Backup Configuration!')
             context = {
                 'backup': backup
             }
             return render(request, 'ansibleweb/backup.html', context)
 
     else:
-        backup = backupall()
+        backup = backupset()
 
     context = {
         'backup': backup
@@ -64,17 +64,18 @@ def backup_act(target, akun,os):
         result = execute(my_play)
         kondisi = result.stats
         kond = kondisi['hosts'][0]['status']
+        print(kond)
         if kond == 'ok':
-            logs = log.objects.filter(account=akun, targetss=Target, action='Backup Config '+Target, status='PENDING').update(status='SUCCESS')
+            logs = log.objects.filter(account=akun, targetss=target, action="Backup Configuration "+target, status='PENDING').update(status='Success')
         else:
             fail = result.results
             err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-            logs = log.objects.filter(account=akun, targetss=Target, action='Backup Config '+Target, status='PENDING').update(status='FAILED', messages=err)
+            logs = log.objects.filter(account=akun, targetss=target, action="Backup Configuration "+target, status='PENDING').update(status='Failed', messages=err)
             print(f'{err}')
     elif os == 'ios':
         my_play = dict(
             name="nyihuy",
-            hosts=Target,
+            hosts=target,
             become='yes',
             become_method='enable',
             gather_facts='no',
@@ -91,17 +92,19 @@ def backup_act(target, akun,os):
         result = execute(my_play)
         kondisi = result.stats
         kond = kondisi['hosts'][0]['status']
+        print(kond)
         if kond == 'ok':
-            logs = log.objects.filter(account=akun, targetss=Target, action='Backup Config '+Target, status='PENDING').update(status='SUCCESS')
+            logs = log.objects.filter(account=akun, targetss=target, action="Backup Configuration "+target, status='PENDING').update(status='Success')
+            print(logs)
         else:
             fail = result.results
             err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-            logs = log.objects.filter(account=akun, targetss=Target, action='Backup Config '+Target, status='PENDING').update(status='FAILED', messages=err)
+            logs = log.objects.filter(account=akun, targetss=target, action="Backup Configuration "+target, status='PENDING').update(status='Failed', messages=err)
             print(f'{err}')
     elif os == 'routeros':
         my_play= dict(
             name="Backup Mikrotik",
-            hosts=data['hosts'],
+            hosts=target,
             become='yes',
             become_method='enable',
             gather_facts='no',
@@ -114,7 +117,7 @@ def backup_act(target, akun,os):
             )              
         my_play2= dict(
             name="Backup Mikrotik",
-            hosts=data['hosts'],
+            hosts=target,
             become='yes',
             become_method='enable',
             gather_facts='no',
@@ -130,12 +133,13 @@ def backup_act(target, akun,os):
         result2 = execute(my_play2)
         kondisi = result2.stats
         kond = kondisi['hosts'][0]['status']
+        print(kond)
         if kond == 'ok':
-            logs = log.objects.filter(account=akun, targetss=Target, action='Backup Config '+Target, status='PENDING').update(status='SUCCESS')
+            logs = log.objects.filter(account=akun, targetss=target, action="Backup Configuration "+target, status='PENDING').update(status='Success')
         else:
             fail = result.results
             err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-            logs = log.objects.filter(account=akun, targetss=Target, action='Backup Config '+Target, status='PENDING').update(status='FAILED', messages=err)
+            logs = log.objects.filter(account=akun, targetss=target, action="Backup Configuration "+target, status='PENDING').update(status='Failed', messages=err)
             print(f'{err}')
 
 

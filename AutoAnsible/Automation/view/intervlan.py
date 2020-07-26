@@ -25,7 +25,7 @@ def ivlan_all(request):
         if form_host.is_valid() and formset.is_valid():
             output = []
             data = request.POST
-            akun = request.akun
+            akun = request.user
             hoss = AnsibleNetworkHost.objects.get(host=data['hosts'])
             os = hoss.group.ansible_network_os
             if os == 'ce':
@@ -89,7 +89,7 @@ def ivlan_all(request):
                             dict(ansible_command_timeout=120)
                         ],
                         tasks=[
-                            dict(action=dict(module='ios_config', lines=['ip address '+address+' '+mask, 'encapsulation dot1q '+enc], parents='int '+interface))
+                            dict(action=dict(module='ios_config', lines=['encapsulation dot1q '+enc, 'ip address '+address+' '+mask], parents='int '+interface))
                         ]
                     )
                     print(my_play)

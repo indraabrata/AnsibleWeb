@@ -1,19 +1,21 @@
+Building configuration...
 
+Current configuration : 1431 bytes
 !
-! Last configuration change at 13:29:16 UTC Wed May 13 2020 by admin
+! Last configuration change at 06:51:18 UTC Mon Jul 20 2020 by admin
 !
 version 15.4
 service timestamps debug datetime msec
 service timestamps log datetime msec
 no service password-encryption
 !
-hostname brot
+hostname CoreRouter
 !
 boot-start-marker
 boot-end-marker
 !
 !
-enable secret 5 $1$EMqb$M.dxOTm32bjAoWLTJlFia1
+enable secret 5 $1$qASE$h44uhms.0W7DTN02QGFQz0
 !
 no aaa new-model
 !
@@ -28,11 +30,6 @@ no aaa new-model
 !
 !
 !
-ip dhcp pool dhcp
- network 10.33.107.0 255.255.255.0
- default-router 10.33.107.75 
- dns-server 10.13.10.13 
-!
 !
 !
 ip domain name cisco-lab.com
@@ -45,11 +42,11 @@ multilink bundle-name authenticated
 cts logging verbose
 !
 !
-license udi pid CISCO2911/K9 sn FGL193210AP
+license udi pid CISCO2911/K9 sn FGL193210AQ
 license boot module c2900 technology-package securityk9
 !
 !
-username admin secret 5 $1$S19L$e8u.B.C3YD.r8k67f269u.
+username admin secret 5 $1$bj2z$I/S1es6qPOtRQ6Ko9RxZX0
 !
 redundancy
 !
@@ -72,31 +69,30 @@ interface Embedded-Service-Engine0/0
  shutdown
 !
 interface GigabitEthernet0/0
- ip address 10.33.107.95 255.255.255.0
+ ip address 10.1.1.1 255.255.255.0
  duplex auto
  speed auto
 !
 interface GigabitEthernet0/1
- ip address 10.33.90.5 255.255.255.0
- shutdown
+ ip address 123.12.1.1 255.255.255.0
  duplex auto
  speed auto
 !
 interface GigabitEthernet0/2
  no ip address
+ shutdown
  duplex auto
  speed auto
 !
-router ospf 10
- network 10.33.90.0 0.0.0.255 area 0
- network 10.33.107.0 0.0.0.255 area 0
+router ospf 1
+ network 10.1.1.0 0.0.0.255 area 0
+ network 123.12.1.0 0.0.0.255 area 0
 !
 ip forward-protocol nd
 !
 no ip http server
 no ip http secure-server
 !
-ip route 0.0.0.0 0.0.0.0 10.33.107.254
 !
 !
 !

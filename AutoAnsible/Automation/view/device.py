@@ -40,6 +40,11 @@ def addportdevice(request):
             data = request.GET
             print(request.GET)
             info = devices.objects.all().filter(device_id=data['hosts'])
+            cek = len(info)
+            if cek > 0 :
+                messages.success(request, f'Infomasi Port telah terdaftar dalam database')
+            else:
+                messages.warning(request, f'Informasi Port belum ditambahkan dalam database')
             context = {
                 'infos': infos,
                 'info': info

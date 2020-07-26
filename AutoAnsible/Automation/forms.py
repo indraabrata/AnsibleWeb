@@ -124,6 +124,7 @@ class ip_static(forms.Form):
 class ospf(forms.Form):
     area = forms.CharField(required=False)
     network = forms.CharField(required=False)
+    mask = forms.CharField(required=False)
 
 class dhcp(forms.Form):
     pool = forms.CharField(required=False)
@@ -138,6 +139,8 @@ class intervlan(forms.Form):
     address = forms.CharField(required=False)
     enc = forms.CharField(required=False)
     mask = forms.CharField(required=False)
+
+backupset = formset_factory(backupall, extra=1)
 
 ivlanset = formset_factory(intervlan, extra=1)
 

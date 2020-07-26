@@ -40,12 +40,12 @@
                     <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12 ">
                         <div class="input-group">
                             {% render_field form.interface class="form-control form-fix-size" placeholder="interface" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form.enc class="form-control form-fix-size" placeholder="encapsulation" required='required' %}
                         <span class="mr-1"></span>
                             {% render_field form.address class="form-control form-fix-size" placeholder="ip address" required='required' %}
                             <span class="mr-1"></span>
                             {% render_field form.mask class="form-control form-fix-size" placeholder="subnet mask" required='required' %}
-                            <span class="mr-1"></span>
-                            {% render_field form.enc class="form-control form-fix-size" placeholder="encapsulation" required='required' %}
                             <div class="input-group-append">
                                 <button class="btn btn-success add-form-row">+</button>
                               </div>
@@ -71,7 +71,9 @@
                     <h4>Result Task</h4>
                 </div>
                 <div class="card-body">
-                    {{output}}
+                    {% for hasil in output %}
+                        {{ hasil }}
+                    {% endfor %}
                 </div>
             </div>
             

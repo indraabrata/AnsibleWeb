@@ -13,7 +13,7 @@
                 </div>
               </div>
           <div class="row d-flex align-items-md-stretch">
-            <div class="col-lg-6 align-items-center">
+            <div class="col-lg-8 align-items-center">
            <div class="card">
           <form method="POST" class="text-left">
                {% csrf_token %}
@@ -34,12 +34,14 @@
             {% for form in formset %}
             <div class="card-body">
                 <div class="row form-row spacer">
-                    <div class="col-4">
+                    <div class="col-8">
                         <label>DHCP Server</label>
                     </div>
                     <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12 ">
                         <div class="input-group">
                             {% render_field form.pool class="form-control form-fix-size" placeholder="pool" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form.interface class="form-control form-fix-size" placeholder="interface" required='required' %}
                             <span class="mr-1"></span>
                             {% render_field form.gateway class="form-control form-fix-size" placeholder="ip gateway" required='required' %}
                         <span class="mr-1"></span>
@@ -67,15 +69,19 @@
         </div>
           </div>
 
-          <div class="col-lg-6">
+          
+          <div class="col-lg-4">
             <div class="card">
                 <div class="card-header d-flex align-items-center">
                     <h4>Result Task</h4>
                 </div>
                 <div class="card-body">
-                    {{output}}
+                    {% for hasil in output %}
+                         {{ hasil }}
+                    {% endfor %}
                 </div>
             </div>
+            
             
         </div>
                 
