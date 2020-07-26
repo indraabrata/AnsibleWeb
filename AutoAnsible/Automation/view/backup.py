@@ -25,19 +25,20 @@ def backup_all(request):
             print(request.POST)
             data = request.POST
             akun = request.user
-            target = data['hosts']            
-            grup = AnsibleNetworkGroup.objects.filter(name=data['hosts']).values_list('ansible_network_os')
-            os = grup[0][0]
-            t1 = threading.Thread(target=backup_act, args=[target, akun, os])
-            t1.start()
-            logs = log(account=akun, targetss=data['hosts'], action="Backup Configuration "+target, status="PENDING", time=datetime.now(), messages="No Error")
-            logs.save()
-            messages.success(request, f'Starting Backup Configuration!')
+            for backups in backup:    
+                tujuan = backups.cleaned_data.get('hosts')  
+                target = tujuan.name         
+                grup = AnsibleNetworkGroup.objects.filter(name=target).values_list('ansible_network_os')
+                os = grup[0][0]
+                t1 = threading.Thread(target=backup_act, args=[target, akun, os])
+                t1.start()
+                logs = log(account=akun, targetss=target, action="Backup Configuration "+target, status="PENDING", time=datetime.now(), messages="No Error")
+                logs.save()
+                messages.success(request, f'Starting Backup Configuration!')
             context = {
                 'backup': backup
             }
             return render(request, 'ansibleweb/backup.html', context)
-
     else:
         backup = backupset()
 
