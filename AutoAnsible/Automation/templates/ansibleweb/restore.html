@@ -1,6 +1,7 @@
 {% extends "ansibleweb/base.html" %}
 {% block content %}
     {% load crispy_forms_tags %}
+    {% load widget_tweaks %}
     <section class="dashboard-counts section-padding">
         <div class="container fluid dashboard-content">
             <div class="row">
@@ -16,26 +17,28 @@
            <div class="card">
           <form method="POST" class="text-left">
                {% csrf_token %}
+               {{ restore.management_form }}
+                  {% for form in restore %}
                <div class="card-body">
-                <div class="row spacer">
-
+                <div class="row form-row spacer">
                     <div class="col-2">
                         <label>Select Device</label>
                     </div>
-                    <div class="col-4">
+                    <div class="col-6">
                         <div class="input-group">
-                            {{restore.hosts}}
+                            {% render_field form.hosts class="form-control form-fix-size" required='required' %}
+                        <span class="mr-2"></span>
+                          <div class="input-group-append">
+                            <button class="btn btn-success add-form-row">+</button>
                         </div>
                     </div>
                 </div>
             </div>
+            {% endfor %}
              <div class="form-group text-center">
              <button class="btn btn-outline-info" type="submit">Restore now</button>
             </div>
          </form>
-        
-        
-        
         </div>
           </div>
             <div class="col-lg-6">
@@ -44,7 +47,9 @@
                         <h4>Result Task</h4>
                     </div>
                     <div class="card-body">
-                        {{output}}
+                        {% for hasil in output %}
+                            {{hasil}}
+                        {% endfor %}
                     </div>
                 </div>
                 

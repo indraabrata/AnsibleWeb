@@ -32,12 +32,8 @@ urlpatterns = [
     path('log/', views.log_info, name='log-report'),
     path('update_group/<str:pk>/', views.updategroup, name='update-group'),
     path('delete_group/<int:id>/', views.deletegroup, name='delete-group'),
-    path('backupcisco/', views.backupcisco, name='backup-cisco'),
     path('restorecisco/', restore.restorecisco, name='restore-cisco'),
     path('backuphuawei/', backup.backup_all, name='backup'),
-    path('restorehuawei/', views.restorehuawei, name='restore-huawei'),
-    path('backupmikrotik/', views.backupmikrotik, name='backup-mikrotik'),
-    path('restoremikrotik/', views.restoremikrotik, name='restore-mikrotik')
 ]
 
 if settings.DEBUG:

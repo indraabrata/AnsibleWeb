@@ -35,6 +35,8 @@ class ciscobackup(forms.Form):
 class ciscorestore(forms.Form):
     hosts = forms.ModelChoiceField(queryset=AnsibleNetworkHost.objects.all(), to_field_name="host")
 
+restoreset = formset_factory(ciscorestore, extra=1)
+
 #HUAWEI FORM ----------------------------------------
 
 class hostnamehuawei(forms.Form):
@@ -120,7 +122,8 @@ class vlan_int(forms.Form):
 class ip_static(forms.Form):
     interface = forms.CharField(required=False)
     ip_add = forms.CharField(required=False)
-
+    mask = forms.CharField(required=False)
+    
 class ospf(forms.Form):
     area = forms.CharField(required=False)
     network = forms.CharField(required=False)

@@ -42,6 +42,8 @@
                             {% render_field form.interface class="form-control form-fix-size" placeholder="interface" required='required' %}
                         <span class="mr-1"></span>
                             {% render_field form.ip_add class="form-control form-fix-size" placeholder="ip address" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form.mask class="form-control form-fix-size" placeholder="netmask" required='required' %}
                             <div class="input-group-append">
                                 <button class="btn btn-success add-form-row">+</button>
                               </div>

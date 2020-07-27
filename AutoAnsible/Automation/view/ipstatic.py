@@ -16,6 +16,7 @@ import time
 import threading
 from django.contrib.auth.models import User
 
+@login_required
 def ipstatic(request):
     if request.method == 'POST':
         form_host = host_all(request.POST, request.user)
@@ -30,6 +31,7 @@ def ipstatic(request):
                 for form in ipset:
                     interface = form.cleaned_data.get('interface')
                     ip_add = form.cleaned_data.get('ip_add')
+                    netmask = form.cleaned_data.get('mask')
                     my_play = dict(
                         name="Config IP Static",
                         hosts=data['hosts'],
@@ -40,7 +42,7 @@ def ipstatic(request):
                             dict(ansible_command_timeout=120)
                         ],
                         tasks=[
-                            dict(action=dict(module='ce_config', lines=['int '+interface, 'ip address '+ip_add, 'undo sh']))
+                            dict(action=dict(module='ce_config', lines=['int '+interface, 'ip address '+ip_add+' '+mask, 'undo sh']))
                         ]
                     )
                     print(my_play)
@@ -73,6 +75,7 @@ def ipstatic(request):
                 for form in ipset:
                     interface = form.cleaned_data.get('interface')
                     ip_add = form.cleaned_data.get('ip_add')
+                    netmask = form.cleaned_data.get('mask')
                     my_play = dict(
                         name="Config IP Static",
                         hosts=data['hosts'],
@@ -83,7 +86,7 @@ def ipstatic(request):
                             dict(ansible_command_timeout=120)
                         ],
                         tasks=[
-                            dict(action=dict(module='ios_config', lines=['ip address '+ip_add, 'no sh'], parents=interface))
+                            dict(action=dict(module='ios_config', lines=['ip address '+ip_add+' '+mask, 'no sh'], parents=interface))
                         ]
                     )
                     print(my_play)
@@ -116,6 +119,7 @@ def ipstatic(request):
                 for form in ipset:
                     interface = form.cleaned_data.get('interface')
                     ip_add = form.cleaned_data.get('ip_add')
+                    netmask = form.cleaned_data.get('mask')
                     my_play = dict(
                         name="Config IP Static",
                         hosts=data['hosts'],
@@ -126,7 +130,7 @@ def ipstatic(request):
                             dict(ansible_command_timeout=120)
                         ],
                         tasks=[
-                            dict(action=dict(module='routeros_command', commands='/ip address add address='+ip_add+' interface='+interface))
+                            dict(action=dict(module='routeros_command', commands='/ip address add address='+ip_add+'/'+mask+'interface='+interface))
                         ]
                     )
                     print(my_play)

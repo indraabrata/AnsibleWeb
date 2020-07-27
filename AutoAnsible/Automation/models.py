@@ -123,8 +123,7 @@ class devices(models.Model):
     preconf = models.CharField(max_length=100, default='empty')
     stats = models.CharField(max_length=100, default='Not Booked')
     new_device_type = models.CharField(max_length=100, default="")
-    new_device_mac = models.CharField(max_length=100, default="")  
-    new_device_os = models.CharField(max_length=100, default="") 
+    new_device_mac = models.CharField(max_length=100, default="")
     device_id = models.ForeignKey(AnsibleNetworkHost, on_delete=models.CASCADE)
 
 class iosrouter(models.Model):

@@ -16,6 +16,7 @@ import time
 import threading
 from django.contrib.auth.models import User
 
+@login_required
 def ospf_all(request):
     if request.method == 'POST':
         form_host = host_all(request.POST, request.user)

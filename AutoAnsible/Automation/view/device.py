@@ -16,6 +16,7 @@ import time
 import threading
 from django.contrib.auth.models import User
 
+@login_required
 def addhost(request):
     if request.method == 'POST':
         adddhost = PostInventoryHost(request.POST, request.user)
@@ -181,7 +182,48 @@ def addportdevice(request):
                 else:
                     messages.warning(request, f'Check Connection to Remote Host!')
                     return redirect('port-device')
-            elif cannot == 0 and os =='ios':
+            elif cannot == 0 and os =='ios' and de_type == 'switch':
+                my_play = dict(
+                    name="Show Ip interface brief",
+                    hosts=host.host,
+                    become='yes',
+                    become_method='enable',
+                    gather_facts='no',
+                    vars=[
+                        dict(ansible_command_timeout=120)
+                    ],
+                    tasks=[
+                        dict(action=dict(module='ios_command', commands=['show ip interface brief']))
+                        ]
+                    )
+                result = execute(my_play)
+                condition = result.stats
+                con = condition['hosts'][0]['status']
+                if con == 'ok':
+                    output = result.results
+                    dataport = output['success'][0]['tasks'][0]['result']['stdout_lines'][0][1:]
+                    maks = len(dataport)
+                    for x in range(0, maks):
+                        portt = dataport[x][:22].replace(" ","")
+                        ip = dataport[x][23:38].replace(" ","")
+                        phys = dataport[x][54:76]
+                        prtcl = dataport[x][76:80].replace(" ","")
+                        coba = devices(port=portt,
+                                        ipadd=ip,
+                                        physical=phys,
+                                        protocol=prtcl,
+                                        device_id=host)
+                        coba.save()
+                    info = devices.objects.all().filter(device_id=data['hosts'])
+                    context = {
+                        'infos': infos,
+                        'info': info
+                    }
+                    return render(request, 'ansibleweb/addinfodevice.html', context)
+                else:
+                    messages.warning(request, f'Check Connection to Remote Host!')
+                    return redirect('port-device')
+            elif cannot == 0 and os =='ios' and de_type == 'router':
                 my_play = dict(
                     name="Show Ip interface brief",
                     hosts=host.host,
@@ -205,7 +247,7 @@ def addportdevice(request):
                     for x in range(0, maks):
                         portt = dataport[x][:22].replace(" ","")
                         ip = dataport[x][27:42].replace(" ","")
-                        phys = dataport[x][54:76].replace(" ","")
+                        phys = dataport[x][54:76]
                         prtcl = dataport[x][76:80].replace(" ","")
                         coba = devices(port=portt,
                                         ipadd=ip,
@@ -331,7 +373,7 @@ def addportdevice(request):
                     else:
                         messages.warning(request, f'Check Connection to Remote Host!')
                         return redirect('port-device')
-                elif os == 'ios':
+                elif os == 'ios' and de_type == 'router':
                     my_play = dict(
                         name="Show Ip interface brief",
                         hosts=host.host,
@@ -367,7 +409,44 @@ def addportdevice(request):
                         return render(request, 'ansibleweb/addinfodevice.html', context)
                     else:
                         messages.warning(request, f'Check connection to Remote Host!')
-                        return redirect('port-device') 
+                        return redirect('port-device')
+                elif os == 'ios' and de_type == 'switch':
+                    my_play = dict(
+                        name="Show Ip interface brief",
+                        hosts=host.host,
+                        become='yes',
+                        become_method='enable',
+                        gather_facts='no',
+                        vars=[
+                            dict(ansible_command_timeout=120)
+                        ],
+                        tasks=[
+                            dict(action=dict(module='ios_command', commands=['show ip interface brief']))
+                            ]
+                        )
+                    result = execute(my_play)
+                    condition = result.stats
+                    con = condition['hosts'][0]['status']
+                    if con == 'ok':
+                        output = result.results
+                        dataport = output['success'][0]['tasks'][0]['result']['stdout_lines'][0][1:]
+                        maks = len(dataport)
+                        for x in range(0, maks):
+                            portt = dataport[x][:22].replace(" ","")
+                            ip = dataport[x][23:38].replace(" ","")
+                            phys = dataport[x][54:76].replace(" ","")
+                            prtcl = dataport[x][76:80].replace(" ","")
+                            devices.objects.filter(device_id=data['hosts']).filter(port=portt).update(ipadd=ip, physical=phys, protocol=prtcl)
+                        messages.info(request, f'Port telah tersedia!')
+                        info = devices.objects.all().filter(device_id=data['hosts'])
+                        context = {
+                            'infos': infos,
+                            'info': info
+                        }
+                        return render(request, 'ansibleweb/addinfodevice.html', context)
+                    else:
+                        messages.warning(request, f'Check connection to Remote Host!')
+                        return redirect('port-device')  
     else:
         infos = addinfodevice()
     

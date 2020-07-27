@@ -77,6 +77,7 @@ def devicess(request):
     }
     return render(request, 'ansibleweb/device.html', context)
 
+@login_required
 def updategroup(request, pk):
     group = AnsibleNetworkGroup.objects.get(id=pk)
     form = PostInventoryGroup(instance=group)
@@ -90,7 +91,7 @@ def updategroup(request, pk):
     context = {'form': form}
     return render(request, 'ansibleweb/post_group.html', context)
 
-
+@login_required
 def updatedevice(request, pk):
     device = AnsibleNetworkHost.objects.get(id=pk)
     form = PostInventoryHost(instance=device)
@@ -104,7 +105,7 @@ def updatedevice(request, pk):
     context = {'form': form}
     return render(request, 'ansibleweb/post_host.html',context)
 
-
+@login_required
 def infodevice(request, pk):
     perangkat = AnsibleNetworkHost.objects.get(id=pk)
     namehost = perangkat.host
@@ -117,11 +118,13 @@ def infodevice(request, pk):
     }
     return render(request, 'ansibleweb/infodevice.html', context)
 
+@login_required
 def deletegroup(request, id):
     group = AnsibleNetworkGroup.objects.get(pk=id)
     group.delete()
     return redirect('device')
 
+@login_required
 def deletedevice(request, id):
     device = AnsibleNetworkHost.objects.get(pk=id)
     deleted = device.host
@@ -131,6 +134,7 @@ def deletedevice(request, id):
     logs.save()
     return redirect('device')
 
+@login_required
 def prenewdevice(request, pk):
     select = devices.objects.get(id=pk)
     if request.method == 'POST':
@@ -139,7 +143,7 @@ def prenewdevice(request, pk):
             print(request.POST)
             data = request.POST
             fil = select.id
-            devices.objects.filter(id=fil).update(new_device_type=data['tipe'], new_device_os=data['os'])
+            devices.objects.filter(id=fil).update(new_device_type=data['tipe'])
             messages.success(request, f'Successfully create PreDevice!')
             return redirect('device')
     else:
@@ -150,13 +154,13 @@ def prenewdevice(request, pk):
     }
     return render(request, 'ansibleweb/prenewdevice.html', context)
 
+@login_required
 def prekonfig(request, pk):
     select = devices.objects.get(id=pk)
     tipe = select.new_device_type
-    cek = select.new_device_os
     state = select.preconf
     print(state)
-    if cek == 'ios' and tipe == 'router':
+    if tipe == 'router':
         if state == 'empty':
             if request.method == 'POST':
                 form_ios = ios_router(request.POST)
@@ -223,20 +227,26 @@ def prekonfig(request, pk):
                 'form_ios': form_ios
             }
             return render(request, 'ansibleweb/iospreconfig.html', context)
-    elif cek == 'ios' and tipe == 'switch':
+    elif tipe == 'switch':
         if state == 'empty':
             if request.method == 'POST':
                 form_ios = ios_switch_form(request.POST)
                 if form_ios.is_valid():
                     data = request.POST
+                    macdata = data['mac']
+                    get1 = macdata.replace("-","")
+                    get2 = get1.replace(".","")
+                    get3 = get2.replace(":","")
+                    get4 = get3.lower()
                     print(request.POST)
                     coba = ios_switch(name=data['name'],
-                                    hostname='sysname '+data['name'],
+                                    hostname=data['name'],
                                     vlan_id=data['vlan_id'],
-                                    vlan_name=data['vlan_name'])
+                                    vlan_name=data['vlan_name'],
+                                    port_id=select)
                     coba.save()
                     idd = select.id
-                    devices.objects.filter(id=idd).update(preconf=data['name'] ,new_device_mac=data['mac'] ,stats='Booked')
+                    devices.objects.filter(id=idd).update(preconf=data['name'] ,new_device_mac=get4 ,stats='Booked')
                     messages.success(request, f'Successfully create PreConfiguration!')
                     return redirect('/')
             else:
@@ -251,13 +261,21 @@ def prekonfig(request, pk):
                 form_ios = ios_switch_form(request.POST)
                 if form_ios.is_valid():
                     data = request.POST
+                    macdata = data['mac']
+                    get1 = macdata.replace("-","")
+                    get2 = get1.replace(".","")
+                    get3 = get2.replace(":","")
+                    get4 = get3.lower()
                     print(request.POST)
                     ios_switch.objects.filter(port_id=select).update(name=data['name'],
-                                    hostname='sysname '+data['name'],
+                                    hostname=data['name'],
                                     vlan_id=data['vlan_id'],
-                                    vlan_name=data['vlan_name'])
+                                    vlan_name=data['vlan_name'],
+                                    port_id=select)
                     idd = select.id
-                    devices.objects.filter(id=idd).update(preconf=data['name'], new_device_mac=data['mac'] ,stats='Booked')
+                    lihat= devices.objects.filter(id=idd).update(preconf=data['name'], new_device_mac=get4 ,stats='Booked')
+                    print(lihat)
+                    print(get4)
                     messages.success(request, f'Successfully update PreConfiguration!')
                     return redirect('/')
             else:
@@ -439,7 +457,7 @@ def prekonfig(request, pk):
 def about(request):
     return render(request, 'ansibleweb/about.html', {'title': 'About'})
 
-
+@login_required
 def addgroup(request):
     if request.method == 'POST':
         adddgroup = group(request.POST, instance=request.user)
@@ -469,314 +487,6 @@ def log_info(request):
     }
     return render(request, 'ansibleweb/home.html', context)
 
-# INI BENAR BACKUP
-
-def backupcisco(request):
-    if request.method == 'POST':
-        backup = ciscobackup(request.POST)
-        if backup.is_valid():
-            print(request.POST)
-            data = request.POST
-            my_play = dict(
-                name="nyihuy",
-                hosts=data['hosts'],
-                become='yes',
-                become_method='enable',
-                gather_facts='no',
-                tasks=[
-                    dict(action=dict(module='ios_config', backup='yes'), register='output'),
-                    dict(action=dict(module='copy', src="{{output.backup_path}}", dest="/home/indra/autonet/AutoAnsible/backup/{{inventory_hostname}}.config")),
-                    dict(action=dict(module='lineinfile', path="/home/indra/autonet/AutoAnsible/backup/{{inventory_hostname}}.config", line="Building configuration...", state='absent')),
-                    dict(action=dict(module='lineinfile', path="/home/indra/autonet/AutoAnsible/backup/{{inventory_hostname}}.config", regexp="Current configuration.*", state='absent'))
-                    ]
-                )
-            result = execute(my_play)
-            #print(json.dumps(result.results, indent=4))
-            output = json.dumps(result.results, indent=4)
-            context = {
-                'backup': backup,
-                'output': output
-            }
-            return render(request, 'ansibleweb/ciscobackup.html', context)
-    else:
-        backup = ciscobackup()
-    
-    context = {
-        'backup': backup
-    }
-    return render(request, 'ansibleweb/ciscobackup.html', context)
-
-def restorecisco(request):
-    if request.method == 'POST':
-        restore = ciscorestore(request.POST)
-        if restore.is_valid():
-            print(request.POST)
-            data = request.POST
-            my_play = dict(
-                name="restore",
-                hosts=data['hosts'],
-                become='yes',
-                become_method='enable',
-                gather_facts='no',
-                tasks=[
-                    dict(net_put=dict(src='/home/indra/autonet/AutoAnsible/backup/{{inventory_hostname}}.config', protocol='scp', dest='flash0:/{{inventory_hostname}}.config')),
-                    dict(action=dict(module='ios_command', commands=['config replace flash:{{inventory_hostname}}.config force']))
-                    ]
-                )
-            result = execute(my_play)
-            #print(json.dumps(result.results, indent=4))
-            output = json.dumps(result.results, indent=4)
-            context = {
-                'restore': restore,
-                'output': output
-            }
-            return render(request, 'ansibleweb/ciscorestore.html', context)
-    else:
-        restore = ciscorestore()
-    
-    context = {
-        'restore': restore
-    }
-    return render(request, 'ansibleweb/ciscorestore.html', context)
-
-
-# Perangkat Huawei
-
-def backuphuawei(request):
-    if request.method=='POST':
-        backup = backupall(request.POST)
-        if backup.is_valid():
-            print(request.POST)
-            data = request.POST
-            my_play = dict(
-                name="Backup Configuration Huawei",
-                hosts=data['hosts'],
-                become='yes',
-                become_method='enable',
-                gather_facts='no',
-                tasks=[
-                    dict(action=dict(module='ce_config', lines=['sysname {{ inventory_hostname }}'], backup='yes'), register='output'),
-                    dict(action=dict(module='copy', src="{{output.backup_path}}", dest="./backup/{{inventory_hostname}}.cfg"))
-                ]
-            )
-        result = execute(my_play)
-        output = json.dumps(result.results, indent=4)
-        context = {
-            'backup': backup,
-            'output': output
-        }
-        return render(request, 'ansibleweb/huawei/huaweibackup.html', context)
-    else:
-        backup = backupall()
-
-    context = {
-        'backup': backup
-    }
-    return render(request, 'ansibleweb/huawei/huaweibackup.html', context)
-
-def restorehuawei(request):
-    if request.method=='POST':
-        restore = huaweirestore(request.POST)
-        if restore.is_valid():
-            print(request.POST)
-            data = request.POST
-            my_play = dict(
-                name="restore",
-                hosts=data['hosts'],
-                become='yes',
-                become_method='enable',
-                gather_facts='no',
-                vars=[
-                    dict(ansible_command_timeout=120)
-                ],
-                tasks=[
-                    dict(action=dict(module='cli_command', command='reset saved-configuration', prompt='Continue', answer='y'))
-                ]
-            )
-            my_play2 = dict(
-                name="restore2",
-                hosts=data['hosts'],
-                become='yes',
-                become_method='enable',
-                gather_facts='no',
-                vars=[
-                    dict(ansible_command_timeout=120)
-                ],
-                tasks=[
-                    dict(action=dict(module='cli_command', command='delete {{inventory_hostname}}startup.cfg', prompt='delete', answer='y'))
-                ]
-            )
-            my_play3 = dict(
-                name="restore3",
-                hosts=data['hosts'],
-                become='yes',
-                become_method='enable',
-                gather_facts='no',
-                vars=[
-                    dict(ansible_command_timeout=120)
-                ],
-                tasks=[
-                    dict(action=dict(module='cli_command', command='delete {{inventory_hostname}}nextup.cfg', prompt='delete', answer='y'))
-                ]
-            )
-            my_play4 = dict(
-                name="restore4",
-                hosts=data['hosts'],
-                become='yes',
-                become_method='enable',
-                gather_facts='no',
-                vars=[
-                    dict(ansible_command_timeout=120)
-                ],
-                tasks=[
-                    dict(net_put=dict(src='./backup/{{inventory_hostname}}.cfg', protocol='scp', dest='flash:/{{inventory_hostname}}startup.cfg'))
-                ]
-            )
-            my_play5 = dict(
-                name="restore4",
-                hosts=data['hosts'],
-                become='yes',
-                become_method='enable',
-                gather_facts='no',
-                vars=[
-                    dict(ansible_command_timeout=120)
-                ],
-                tasks=[
-                    dict(net_put=dict(src='./backup/{{inventory_hostname}}.cfg', protocol='scp', dest='flash:/{{inventory_hostname}}nextup.cfg'))
-                ]
-            )
-            my_play6 = dict(
-                name="restore4",
-                hosts=data['hosts'],
-                become='yes',
-                become_method='enable',
-                gather_facts='no',
-                vars=[
-                    dict(ansible_command_timeout=120)
-                ],
-                tasks=[
-                    dict(action=dict(module='ce_command', commands='startup saved-configuration {{inventory_hostname}}startup.cfg'))
-                ]
-            )                        
-            my_play7 = dict(
-                name="restore5",
-                hosts=data['hosts'],
-                become='yes',
-                become_method='enable',
-                gather_facts='no',
-                vars=[
-                    dict(ansible_command_timeout=120)
-                ],
-                tasks=[
-                    dict(action=dict(module='ce_command', commands='startup saved-configuration {{inventory_hostname}}nextup.cfg'))
-                ]
-            )
-        result = execute(my_play)
-        result2 = execute(my_play2)
-        result3 = execute(my_play3)
-        result4 = execute(my_play4)
-        result5 = execute(my_play5)
-        result6 = execute(my_play6)
-        result7 = execute(my_play7)
-        output = json.dumps(result7.results, indent=4)
-        context = {
-            'restore': restore,
-            'output': output
-        }
-        return render(request, 'ansibleweb/huawei/restorehuawei.html',context)
-    else:
-        restore = huaweirestore()
-        
-    context= {
-        'restore': restore
-    }
-    return render(request, 'ansibleweb/huawei/restorehuawei.html',context)
-
-#MIKROTIK CONFIG --------------
-    
-def backupmikrotik(request):
-    if request.method=='POST':
-        backup = mikrotikbackup(request.POST)
-        if backup.is_valid():
-            print(request.POST)
-            data = request.POST
-            my_play= dict(
-                name="Backup Mikrotik",
-                hosts=data['hosts'],
-                become='yes',
-                become_method='enable',
-                gather_facts='no',
-                vars=[
-                    dict(ansible_command_timeout=120)
-                ],
-                tasks=[
-                    dict(file=dict(path='./backup/{{inventory_hostname}}.backup', state='absent'))
-                ]
-            )            
-            my_play2= dict(
-                name="Backup Mikrotik",
-                hosts=data['hosts'],
-                become='yes',
-                become_method='enable',
-                gather_facts='no',
-                vars=[
-                    dict(ansible_command_timeout=120)
-                ],
-                tasks=[
-                    dict(action=dict(module='routeros_command', commands='/system backup save name={{ inventory_hostname }} password={{ ansible_password }}')),
-                    dict(net_get=dict(src="./{{ inventory_hostname }}.backup", protocol='scp', dest='./backup/{{ inventory_hostname}}.backup'))
-                ]
-            )
-        result = execute(my_play)
-        result2 = execute(my_play2)
-        output = json.dumps(result2.results, indent=4)
-        context = {
-            'backup': backup,
-            'output': output
-        }
-        return render(request, 'ansibleweb/mikrotik/backupmikrotik.html', context)
-    else:
-        backup = mikrotikbackup()
-        
-    context = {
-        'backup': backup
-    }
-    return render(request, 'ansibleweb/mikrotik/backupmikrotik.html', context)
-
-def restoremikrotik(request):
-    if request.method=='POST':
-        restore = mikrotikrestore(request.POST)
-        if restore.is_valid():
-            print(request.POST)
-            data = request.POST
-            my_play = dict(
-                name="Restore Mikrotik",
-                hosts=data['hosts'],
-                become='yes',
-                become_method='enable',
-                gather_facts='no',
-                vars=[
-                    dict(ansible_command_timeout=120)
-                ],
-                tasks=[
-                    dict(net_put=dict(src='./backup/{{inventory_hostname}}.backup', protocol='scp', dest='./{{inventory_hostname}}.backup')),
-                    dict(action=dict(module='cli_command', command=':execute {/system backup load name=mtk2 password=mikrotik;}', prompt='Restore and reboot', answer='y'))                    
-                ]
-            )
-        result = execute(my_play)
-        output = json.dumps(result.results, indent=4)
-        context = {
-            'restore': restore,
-            'output': output
-        }
-        return render(request, 'ansibleweb/mikrotik/restoremikrotik.html', context)
-    else:
-        restore = mikrotikrestore()
-    
-    context = {
-        'restore': restore
-    }
-    return render(request, 'ansibleweb/mikrotik/restoremikrotik.html', context)
 
 
 

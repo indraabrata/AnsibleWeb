@@ -17,7 +17,7 @@ import time
 import threading
 from django.contrib.auth.models import User
 
-
+@login_required
 def backup_all(request):
     if request.method=='POST':
         backup = backupset(request.POST, request.user)
