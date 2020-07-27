@@ -1,12 +1,13 @@
 {% extends "ansibleweb/base.html" %}
 {% block content %}
     {% load crispy_forms_tags %}
+    {% load widget_tweaks %}
     <section class="dashboard-counts section-padding">
         <div class="container fluid dashboard-content">
             <div class="row">
                 <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
                   <div class="page-header">
-                    <h2 class="pageheader-title">Configure Hostname</h2>
+                    <h2 class="pageheader-title">List Pre Configuration Router</h2>
                     <p class="pageheader-text">Create task to configure hostname device</p>
                   </div>
                 </div>
@@ -24,7 +25,7 @@
                     </div>
                     <div class="col-4">
                         <div class="input-group">
-                            {{form_ios.name}}
+                            {% render_field form_ios.name class="form-control form-fix-size" placeholder="mac address" required='required' %}
                         </div>
                     </div>
                 </div>
@@ -37,7 +38,7 @@
                     </div>
                     <div class="col-4">
                         <div class="input-group">
-                            {{form_ios.mac}}
+                            {% render_field form_ios.mac class="form-control form-fix-size" placeholder="mac address" required='required' %}
                         </div>
                     </div>
                 </div>
@@ -50,7 +51,9 @@
                     </div>
                     <div class="col-4">
                         <div class="input-group">
-                            {{form_ios.port_ip}}
+                            {% render_field form_ios.port_ip class="form-control form-fix-size" placeholder="interface" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.port_cmd class="form-control form-fix-size" placeholder="ip address" required='required' %}
                         </div>
                     </div>
                 </div>
@@ -59,11 +62,15 @@
                 <div class="row spacer">
 
                     <div class="col-2">
-                        <label>IP Address</label>
+                        <label>InterVLAN</label>
                     </div>
                     <div class="col-4">
                         <div class="input-group">
-                            {{form_ios.port_cmd}}
+                            {% render_field form_ios.i_vlan_int class="form-control form-fix-size" placeholder="interface" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.i_vlan_enc class="form-control form-fix-size" placeholder="interface" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.i_vlan_cmd class="form-control form-fix-size" placeholder="interface" required='required' %}
                         </div>
                     </div>
                 </div>
@@ -72,37 +79,15 @@
                 <div class="row spacer">
 
                     <div class="col-2">
-                        <label>InterVLAN interface</label>
+                        <label>InterVLAN</label>
                     </div>
                     <div class="col-4">
                         <div class="input-group">
-                            {{form_ios.i_vlan_int}}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="row spacer">
-
-                    <div class="col-2">
-                        <label>Encapsulation</label>
-                    </div>
-                    <div class="col-4">
-                        <div class="input-group">
-                            {{form_ios.i_vlan_enc}}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="row spacer">
-
-                    <div class="col-2">
-                        <label>IP Address VLAN</label>
-                    </div>
-                    <div class="col-4">
-                        <div class="input-group">
-                            {{form_ios.i_vlan_cmd}}
+                            {% render_field form_ios.i_vlan_int class="form-control form-fix-size" placeholder="interface" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.i_vlan_enc class="form-control form-fix-size" placeholder="interface" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.i_vlan_cmd class="form-control form-fix-size" placeholder="interface" required='required' %}
                         </div>
                     </div>
                 </div>

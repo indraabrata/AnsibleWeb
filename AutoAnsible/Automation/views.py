@@ -168,19 +168,19 @@ def prekonfig(request, pk):
                     data = request.POST
                     print(request.POST)
                     coba = iosrouter(name=data['name'],
-                                    hostname='hostname '+data['name'],
+                                    hostname=data['name'],
                                     port_ip=data['port_ip'],
-                                    port_cmd='ip add '+data['port_cmd'],
-                                    i_vlan_int='int '+data['i_vlan_int'],
-                                    i_vlan_enc='encapsulation dot1Q '+data['i_vlan_enc'],
-                                    i_vlan_cmd='ip address '+data['i_vlan_cmd'],
-                                    ospf='router ospf '+data['ospf'],
-                                    ospf_network='network '+data['ospf_network'],
+                                    port_cmd=data['port_cmd'],
+                                    i_vlan_int=data['i_vlan_int'],
+                                    i_vlan_enc=data['i_vlan_enc'],
+                                    i_vlan_cmd=data['i_vlan_cmd'],
+                                    ospf=data['ospf'],
+                                    ospf_network=data['ospf_network'],
                                     ospf_area=data['ospf_area'],
-                                    dhcp_network='network '+data['dhcp_network'],
-                                    default_router ='default-router '+data['default_router'],
-                                    dns_server='dns-server '+data['dns_server'],
-                                    dhcp_pool='ip dhcp pool '+data['dhcp_pool'],
+                                    dhcp_network=data['dhcp_network'],
+                                    default_router =data['default_router'],
+                                    dns_server=data['dns_server'],
+                                    dhcp_pool=data['dhcp_pool'],
                                     port_id=select)
                     coba.save()
                     idd = select.id
@@ -189,7 +189,6 @@ def prekonfig(request, pk):
                     return redirect('/')
             else:
                 form_ios = ios_router()
-                messages.warning(request, f'tidak valid')
 
             context = {
                 'form_ios': form_ios
@@ -198,24 +197,23 @@ def prekonfig(request, pk):
         else:
             if request.method == 'POST':
                 form_ios = ios_router(request.POST)
-                Print('TIDAK EMPTY')
                 if form_ios.is_valid():
                     data = request.POST
                     print(request.POST)
                     iosrouter.objects.filter(port_id=select).update(name=data['name'],
-                                                                    hostname='hostname '+data['name'],
+                                                                    hostname=data['name'],
                                                                     port_ip=data['port_ip'],
-                                                                    port_cmd='ip add '+data['port_cmd'],
-                                                                    i_vlan_int='int '+data['i_vlan_int'],
-                                                                    i_vlan_enc='encapsulation dot1Q '+data['i_vlan_enc'],
-                                                                    i_vlan_cmd='ip address '+data['i_vlan_cmd'],
-                                                                    ospf='router ospf '+data['ospf'],
-                                                                    ospf_network='network '+data['ospf_network'],
+                                                                    port_cmd=data['port_cmd'],
+                                                                    i_vlan_int=data['i_vlan_int'],
+                                                                    i_vlan_enc=data['i_vlan_enc'],
+                                                                    i_vlan_cmd=data['i_vlan_cmd'],
+                                                                    ospf=data['ospf'],
+                                                                    ospf_network=data['ospf_network'],
                                                                     ospf_area=data['ospf_area'],
-                                                                    dhcp_network='network '+data['dhcp_network'],
-                                                                    default_router ='default-router '+data['default_router'],
-                                                                    dns_server='dns-server '+data['dns_server'],
-                                                                    dhcp_pool='ip dhcp pool '+data['dhcp_pool'])
+                                                                    dhcp_network=data['dhcp_network'],
+                                                                    default_router=data['default_router'],
+                                                                    dns_server=data['dns_server'],
+                                                                    dhcp_pool=data['dhcp_pool'])
                     idd = select.id
                     devices.objects.filter(id=idd).update(preconf=data['name'], new_device_mac=data['mac'], stats='Booked')
                     messages.success(request, f'Successfully update PreConfiguration!')
