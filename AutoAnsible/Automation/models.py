@@ -92,22 +92,60 @@ class addinfodevice(forms.Form):
 class ios_router(forms.Form):
     name = forms.CharField()
     mac = forms.CharField()
+
     port_ip = forms.CharField()
     port_cmd = forms.CharField()
+    port_mask = forms.CharField()
+
     i_vlan_int = forms.CharField()
     i_vlan_enc = forms.CharField()
     i_vlan_cmd = forms.CharField()
-    ospf = forms.CharField()
-    ospf_network = forms.CharField()
+    i_vlan_mask = forms.CharField()
+
+    i_vlan_int2 = forms.CharField()
+    i_vlan_enc2 = forms.CharField()
+    i_vlan_cmd2 = forms.CharField()
+    i_vlan_mask2 = forms.CharField()
+
+
     ospf_area = forms.CharField()
-    dhcp_network = forms.CharField()
-    default_router = forms.CharField()
-    dns_server = forms.CharField()
+    ospf_network = forms.CharField()
+    ospf_mask = forms.CharField()
+
+    ospf_area2 = forms.CharField()
+    ospf_network2 = forms.CharField()
+    ospf_mask2 = forms.CharField()
+
+    ospf_area3 = forms.CharField()
+    ospf_network3 = forms.CharField()
+    ospf_mask3 = forms.CharField()
+
+
     dhcp_pool = forms.CharField()
+    default_router = forms.CharField()
+    dhcp_network = forms.CharField()
+    dhcp_mask = forms.CharField()
+    dhcp_excluded = forms.CharField()
+
+    dhcp_pool2 = forms.CharField()
+    default_router2 = forms.CharField()
+    dhcp_network2 = forms.CharField()
+    dhcp_mask2 = forms.CharField()
+    dhcp_excluded2 = forms.CharField()
+
+    dhcp_pool3 = forms.CharField()
+    default_router3 = forms.CharField()
+    dhcp_network3 = forms.CharField()
+    dhcp_mask3 = forms.CharField()
+    dhcp_excluded3 = forms.CharField()
+
+    default_gateway = forms.CharField()
+    
+
+
 
 class preconfdevice(forms.Form):
     tipe = forms.ChoiceField(choices= DEVICE_CHOICES)
-    os = forms.ChoiceField(choices= OS_CHOICES)
 
 class arp(models.Model):
     ipadd = models.CharField(max_length=255, default="")
@@ -129,18 +167,54 @@ class devices(models.Model):
 class iosrouter(models.Model):
     name = models.CharField(max_length=100, default="")
     hostname = models.CharField(max_length=100, default="")
+
     port_ip = models.CharField(max_length=100, default="")
     port_cmd = models.CharField(max_length=100, default="")
+    port_mask = models.CharField(max_length=100, default="")
+
     i_vlan_int = models.CharField(max_length=100, default="")
     i_vlan_enc = models.CharField(max_length=100, default="")
     i_vlan_cmd = models.CharField(max_length=100, default="")
-    ospf = models.CharField(max_length=100, default="")
-    ospf_network = models.CharField(max_length=100, default="")
+    i_vlan_mask = models.CharField(max_length=10, default="")
+
+    i_vlan_int2 = models.CharField(max_length=100, default="")
+    i_vlan_enc2 = models.CharField(max_length=100, default="")
+    i_vlan_cmd2 = models.CharField(max_length=100, default="")
+    i_vlan_mask2 = models.CharField(max_length=10, default="")
+
     ospf_area = models.CharField(max_length=100, default="")
-    dhcp_network = models.CharField(max_length=100, default="")
-    default_router = models.CharField(max_length=100, default="")
-    dns_server = models.CharField(max_length=100, default="")
+    ospf_network = models.CharField(max_length=100, default="")
+    ospf_mask = models.CharField(max_length=100, default="")
+
+    ospf_area2 = models.CharField(max_length=100, default="")
+    ospf_network2 = models.CharField(max_length=100, default="")
+    ospf_mask2 = models.CharField(max_length=100, default="")
+
+    ospf_area3 = models.CharField(max_length=100, default="")
+    ospf_network3 = models.CharField(max_length=100, default="")
+    ospf_mask3 = models.CharField(max_length=100, default="")
+
+
     dhcp_pool = models.CharField(max_length=100, default="")
+    default_router = models.CharField(max_length=100, default="")
+    dhcp_network = models.CharField(max_length=100, default="")
+    dhcp_mask = models.CharField(max_length=100, default="")
+    dhcp_excluded = models.CharField(max_length=100, default="")
+
+    dhcp_pool2 = models.CharField(max_length=100, default="")
+    default_router2 = models.CharField(max_length=100, default="")
+    dhcp_network2 = models.CharField(max_length=100, default="")
+    dhcp_mask2 = models.CharField(max_length=100, default="")
+    dhcp_excluded2 = models.CharField(max_length=100, default="")
+
+    dhcp_pool3 = models.CharField(max_length=100, default="")
+    default_router3 = models.CharField(max_length=100, default="")
+    dhcp_network3 = models.CharField(max_length=100, default="")
+    dhcp_mask3 = models.CharField(max_length=100, default="")
+    dhcp_excluded3 = models.CharField(max_length=100, default="")
+
+    default_gateway = models.CharField(max_length=100, default="")
+
     port_id = models.ForeignKey(devices, on_delete=models.CASCADE)
 
 class ce_router(models.Model):
@@ -184,10 +258,27 @@ class kamusport(models.Model):
 class ios_switch(models.Model):
     name = models.CharField(max_length=100, default="")
     hostname = models.CharField(max_length=100, default="")
-    port_ip = models.CharField(max_length=100, default="")
-    port_cmd = models.CharField(max_length=100, default="")
+    mac = models.CharField(max_length=100, default="")
+
     vlan_id = models.CharField(max_length=100, default="")
     vlan_name = models.CharField(max_length=100, default="")
+
+    vlan_id2 = models.CharField(max_length=100, default="")
+    vlan_name2 = models.CharField(max_length=100, default="")
+
+    vlan_id3 = models.CharField(max_length=100, default="")
+    vlan_name3 = models.CharField(max_length=100, default="")
+
+    interface = models.CharField(max_length=100, default="")
+    mode = models.CharField(max_length=100, default="")
+    vlan = models.CharField(max_length=100, default="")
+
+    interface2 = models.CharField(max_length=100, default="")
+    mode2 = models.CharField(max_length=100, default="")
+    vlan2 = models.CharField(max_length=100, default="")
+
+    gateway = models.CharField(max_length=100, default="")
+
     port_id = models.ForeignKey(devices, on_delete=models.CASCADE)
 
 class ios_switch_form(forms.Form):
@@ -195,6 +286,22 @@ class ios_switch_form(forms.Form):
     mac = forms.CharField()
     vlan_id = forms.CharField()
     vlan_name = forms.CharField()
+
+    vlan_id2 = forms.CharField()
+    vlan_name2 = forms.CharField()
+
+    vlan_id3 = forms.CharField()
+    vlan_name3 = forms.CharField()
+
+    interface = forms.CharField()
+    mode = forms.CharField()
+    vlan = forms.CharField()
+
+    interface2 = forms.CharField()
+    mode2 = forms.CharField()
+    vlan2 = forms.CharField()
+
+    gateway = forms.CharField()
 
 class ce_switch(models.Model):
     name = models.CharField(max_length=100, default="")

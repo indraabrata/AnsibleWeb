@@ -48,6 +48,7 @@ def restorecisco(request):
                     kond = result.stats
                     kondisi = kond['hosts'][0]['status']
                     hos = kond['hosts'][0]['host']
+                    print(result.results)
                     if kondisi == 'ok':
                         dataport = result.results                
                         command = dataport['success'][0]['tasks'][0]['result']['commands'][0]

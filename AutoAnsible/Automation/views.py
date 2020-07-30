@@ -169,18 +169,53 @@ def prekonfig(request, pk):
                     print(request.POST)
                     coba = iosrouter(name=data['name'],
                                     hostname=data['name'],
+
                                     port_ip=data['port_ip'],
                                     port_cmd=data['port_cmd'],
+                                    port_mask=data['port_mask'],
+
                                     i_vlan_int=data['i_vlan_int'],
                                     i_vlan_enc=data['i_vlan_enc'],
                                     i_vlan_cmd=data['i_vlan_cmd'],
-                                    ospf=data['ospf'],
-                                    ospf_network=data['ospf_network'],
+                                    i_vlan_mask=data['i_vlan_mask'],
+
+                                    i_vlan_int2=data['i_vlan_int2'],
+                                    i_vlan_enc2=data['i_vlan_enc2'],
+                                    i_vlan_cmd2=data['i_vlan_cmd2'],
+                                    i_vlan_mask2=data['i_vlan_mask2'],
+
                                     ospf_area=data['ospf_area'],
-                                    dhcp_network=data['dhcp_network'],
-                                    default_router =data['default_router'],
-                                    dns_server=data['dns_server'],
+                                    ospf_network=data['ospf_network'],
+                                    ospf_mask=data['ospf_mask'],
+
+                                    ospf_area2=data['ospf_area2'],
+                                    ospf_network2=data['ospf_network2'],
+                                    ospf_mask2=data['ospf_mask2'],
+
+                                    ospf_area3=data['ospf_area3'],
+                                    ospf_network3=data['ospf_network3'],
+                                    ospf_mask3=data['ospf_mask3'],
+
                                     dhcp_pool=data['dhcp_pool'],
+                                    default_router =data['default_router'],
+                                    dhcp_network=data['dhcp_network'],
+                                    dhcp_mask=data['dhcp_mask'],
+                                    dhcp_excluded=data['dhcp_excluded'],
+
+                                    dhcp_pool2=data['dhcp_pool2'],
+                                    default_router2=data['default_router2'],
+                                    dhcp_network2=data['dhcp_network2'],
+                                    dhcp_mask2=data['dhcp_mask2'],
+                                    dhcp_excluded2=data['dhcp_excluded2'],
+
+                                    dhcp_pool3=data['dhcp_pool3'],
+                                    default_router3=data['default_router3'],
+                                    dhcp_network3=data['dhcp_network3'],
+                                    dhcp_mask3=data['dhcp_mask3'],
+                                    dhcp_excluded3=data['dhcp_excluded3'],
+
+                                    default_gateway=data['default_gateway'],
+
                                     port_id=select)
                     coba.save()
                     idd = select.id
@@ -199,23 +234,62 @@ def prekonfig(request, pk):
                 form_ios = ios_router(request.POST)
                 if form_ios.is_valid():
                     data = request.POST
+                    macdata = data['mac']
+                    get1 = macdata.replace("-","")
+                    get2 = get1.replace(".","")
+                    get3 = get2.replace(":","")
+                    get4 = get3.lower()
                     print(request.POST)
                     iosrouter.objects.filter(port_id=select).update(name=data['name'],
                                                                     hostname=data['name'],
                                                                     port_ip=data['port_ip'],
                                                                     port_cmd=data['port_cmd'],
+                                                                    port_mask=data['port_mask'],
+
                                                                     i_vlan_int=data['i_vlan_int'],
                                                                     i_vlan_enc=data['i_vlan_enc'],
                                                                     i_vlan_cmd=data['i_vlan_cmd'],
-                                                                    ospf=data['ospf'],
-                                                                    ospf_network=data['ospf_network'],
+                                                                    i_vlan_mask=data['i_vlan_mask'],
+
+                                                                    i_vlan_int2=data['i_vlan_int2'],
+                                                                    i_vlan_enc2=data['i_vlan_enc2'],
+                                                                    i_vlan_cmd2=data['i_vlan_cmd2'],
+                                                                    i_vlan_mask2=data['i_vlan_mask2'],
+
                                                                     ospf_area=data['ospf_area'],
+                                                                    ospf_network=data['ospf_network'],
+                                                                    ospf_mask=data['ospf_mask'],
+
+                                                                    ospf_area2=data['ospf_area2'],
+                                                                    ospf_network2=data['ospf_network2'],
+                                                                    ospf_mask2=data['ospf_mask2'],
+
+                                                                    ospf_area3=data['ospf_area3'],
+                                                                    ospf_network3=data['ospf_network3'],
+                                                                    ospf_mask3=data['ospf_mask3'],
+
+                                                                    dhcp_pool=data['dhcp_pool'],
+                                                                    default_router =data['default_router'],
                                                                     dhcp_network=data['dhcp_network'],
-                                                                    default_router=data['default_router'],
-                                                                    dns_server=data['dns_server'],
-                                                                    dhcp_pool=data['dhcp_pool'])
+                                                                    dhcp_mask=data['dhcp_mask'],
+                                                                    dhcp_excluded=data['dhcp_excluded'],
+
+                                                                    dhcp_pool2=data['dhcp_pool2'],
+                                                                    default_router2=data['default_router2'],
+                                                                    dhcp_network2=data['dhcp_network2'],
+                                                                    dhcp_mask2=data['dhcp_mask2'],
+                                                                    dhcp_excluded2=data['dhcp_excluded2'],
+
+                                                                    dhcp_pool3=data['dhcp_pool3'],
+                                                                    default_router3=data['default_router3'],
+                                                                    dhcp_network3=data['dhcp_network3'],
+                                                                    dhcp_mask3=data['dhcp_mask3'],
+                                                                    dhcp_excluded3=data['dhcp_excluded3'],
+                                                                    
+                                                                    default_gateway=data['default_gateway'])
+
                     idd = select.id
-                    devices.objects.filter(id=idd).update(preconf=data['name'], new_device_mac=data['mac'], stats='Booked')
+                    devices.objects.filter(id=idd).update(preconf=data['name'], new_device_mac=get4, stats='Booked')
                     messages.success(request, f'Successfully update PreConfiguration!')
                     return redirect('/')
             else:
@@ -239,8 +313,25 @@ def prekonfig(request, pk):
                     print(request.POST)
                     coba = ios_switch(name=data['name'],
                                     hostname=data['name'],
+
                                     vlan_id=data['vlan_id'],
                                     vlan_name=data['vlan_name'],
+
+                                    vlan_id2=data['vlan_id2'],
+                                    vlan_name2=data['vlan_name2'],
+
+                                    vlan_id3=data['vlan_id3'],
+                                    vlan_name3=data['vlan_name3'],
+
+                                    interface=data['interface'],
+                                    mode=data['mode'],
+                                    vlan=data['vlan'],
+
+                                    interface2=data['interface2'],
+                                    mode2=data['mode2'],
+                                    vlan2=data['vlan2'],
+
+
                                     port_id=select)
                     coba.save()
                     idd = select.id

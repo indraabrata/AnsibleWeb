@@ -1,0 +1,142 @@
+Building configuration...
+
+Current configuration : 2033 bytes
+!
+! Last configuration change at 08:39:19 UTC Wed Jul 29 2020 by admin
+!
+version 15.4
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+!
+hostname RouterMipa
+!
+boot-start-marker
+boot-end-marker
+!
+!
+enable secret 5 $1$/.pi$v3gAQi1/HL2kEkt5owSWg1
+!
+no aaa new-model
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+ip dhcp excluded-address 192.168.10.1
+ip dhcp excluded-address 192.168.20.1
+ip dhcp excluded-address 192.168.50.1
+!
+ip dhcp pool mahasiswa
+ network 192.168.10.0 255.255.255.0
+ default-router 192.168.10.1 
+!
+ip dhcp pool dosen
+ network 192.168.20.0 255.255.255.0
+ default-router 192.168.20.1 
+!
+ip dhcp pool switch1
+ network 192.168.50.0 255.255.255.0
+ default-router 192.168.50.1 
+!
+!
+!
+ip domain name cisco-lab.com
+ip cef
+no ipv6 cef
+!
+multilink bundle-name authenticated
+!
+!
+cts logging verbose
+!
+!
+license udi pid CISCO2911/K9 sn FGL193210AA
+license boot module c2900 technology-package securityk9
+!
+!
+username admin secret 5 $1$0Hm2$pEbKN88O.hNQWZ4yK8cNW.
+!
+redundancy
+!
+!
+!
+!
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+interface Embedded-Service-Engine0/0
+ no ip address
+ shutdown
+!
+interface GigabitEthernet0/0
+ ip address dhcp
+ duplex auto
+ speed auto
+!
+interface GigabitEthernet0/1
+ ip address 192.168.50.1 255.255.255.0
+ duplex auto
+ speed auto
+!
+interface GigabitEthernet0/1.10
+ encapsulation dot1Q 10
+ ip address 192.168.10.1 255.255.255.0
+!
+interface GigabitEthernet0/1.20
+ encapsulation dot1Q 20
+ ip address 192.168.20.1 255.255.255.0
+!
+interface GigabitEthernet0/2
+ no ip address
+ shutdown
+ duplex auto
+ speed auto
+!
+router ospf 1
+ network 10.1.1.0 0.0.0.255 area 0
+ network 123.0.0.0 0.255.255.255 area 0
+ network 192.168.0.0 0.0.255.255 area 0
+!
+ip forward-protocol nd
+!
+no ip http server
+no ip http secure-server
+!
+!
+!
+!
+!
+control-plane
+!
+!
+!
+line con 0
+line aux 0
+line 2
+ no activation-character
+ no exec
+ transport preferred none
+ transport output pad telnet rlogin lapb-ta mop udptn v120 ssh
+ stopbits 1
+line vty 0 4
+ login local
+ transport input ssh
+!
+scheduler allocate 20000 1000
+!
+end

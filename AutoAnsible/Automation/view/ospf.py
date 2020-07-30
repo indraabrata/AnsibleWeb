@@ -94,6 +94,7 @@ def ospf_all(request):
                     kond = result.stats
                     kondisi = kond['hosts'][0]['status']
                     hos = kond['hosts'][0]['host']
+                    print(kondisi)
                     if kondisi == 'ok':
                         dataport = result.results                
                         command = dataport['success'][0]['tasks'][0]['result']['commands'][0]

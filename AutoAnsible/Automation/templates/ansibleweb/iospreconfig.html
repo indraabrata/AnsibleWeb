@@ -13,7 +13,7 @@
                 </div>
               </div>
           <div class="row d-flex align-items-md-stretch">
-            <div class="col-lg-8">
+            <div class="col-lg-12">
            <div class="card">
           <form method="POST" class="text-left">
                {% csrf_token %}
@@ -25,7 +25,7 @@
                     </div>
                     <div class="col-4">
                         <div class="input-group">
-                            {% render_field form_ios.name class="form-control form-fix-size" placeholder="mac address" required='required' %}
+                            {% render_field form_ios.name class="form-control form-fix-size" placeholder="Name Host" required='required' %}
                         </div>
                     </div>
                 </div>
@@ -47,86 +47,19 @@
                 <div class="row spacer">
 
                     <div class="col-2">
-                        <label>Interface IP</label>
+                        <label>DHCP POOL</label>
                     </div>
-                    <div class="col-4">
+                    <div class="col-8">
                         <div class="input-group">
-                            {% render_field form_ios.port_ip class="form-control form-fix-size" placeholder="interface" required='required' %}
+                            {% render_field form_ios.dhcp_pool class="form-control form-fix-size" placeholder="Pool" required='required' %}
                             <span class="mr-1"></span>
-                            {% render_field form_ios.port_cmd class="form-control form-fix-size" placeholder="ip address" required='required' %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="row spacer">
-
-                    <div class="col-2">
-                        <label>InterVLAN</label>
-                    </div>
-                    <div class="col-4">
-                        <div class="input-group">
-                            {% render_field form_ios.i_vlan_int class="form-control form-fix-size" placeholder="interface" required='required' %}
+                            {% render_field form_ios.default_router class="form-control form-fix-size" placeholder="IP Address" required='required' %}
                             <span class="mr-1"></span>
-                            {% render_field form_ios.i_vlan_enc class="form-control form-fix-size" placeholder="interface" required='required' %}
+                            {% render_field form_ios.dhcp_network class="form-control form-fix-size" placeholder="Network" required='required' %}
                             <span class="mr-1"></span>
-                            {% render_field form_ios.i_vlan_cmd class="form-control form-fix-size" placeholder="interface" required='required' %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="row spacer">
-
-                    <div class="col-2">
-                        <label>InterVLAN</label>
-                    </div>
-                    <div class="col-4">
-                        <div class="input-group">
-                            {% render_field form_ios.i_vlan_int class="form-control form-fix-size" placeholder="interface" required='required' %}
+                            {% render_field form_ios.dhcp_mask class="form-control form-fix-size" placeholder="Mask" required='required' %}
                             <span class="mr-1"></span>
-                            {% render_field form_ios.i_vlan_enc class="form-control form-fix-size" placeholder="interface" required='required' %}
-                            <span class="mr-1"></span>
-                            {% render_field form_ios.i_vlan_cmd class="form-control form-fix-size" placeholder="interface" required='required' %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="row spacer">
-
-                    <div class="col-2">
-                        <label>OSPF</label>
-                    </div>
-                    <div class="col-4">
-                        <div class="input-group">
-                            {{form_ios.ospf}}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="row spacer">
-
-                    <div class="col-2">
-                        <label>NETWORK OSPF</label>
-                    </div>
-                    <div class="col-4">
-                        <div class="input-group">
-                            {{form_ios.ospf_network}}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="row spacer">
-
-                    <div class="col-2">
-                        <label>Area OSPF</label>
-                    </div>
-                    <div class="col-4">
-                        <div class="input-group">
-                            {{form_ios.ospf_area}}
+                            {% render_field form_ios.dhcp_excluded class="form-control form-fix-size" placeholder="IP excluded" required='required' %}
                         </div>
                     </div>
                 </div>
@@ -137,9 +70,17 @@
                     <div class="col-2">
                         <label>DHCP POOL</label>
                     </div>
-                    <div class="col-4">
+                    <div class="col-8">
                         <div class="input-group">
-                            {{form_ios.dhcp_pool}}
+                            {% render_field form_ios.dhcp_pool2 class="form-control form-fix-size" placeholder="Pool" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.default_router2 class="form-control form-fix-size" placeholder="IP Address" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.dhcp_network2 class="form-control form-fix-size" placeholder="Network" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.dhcp_mask2 class="form-control form-fix-size" placeholder="Mask" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.dhcp_excluded2 class="form-control form-fix-size" placeholder="IP excluded" required='required' %}
                         </div>
                     </div>
                 </div>
@@ -148,11 +89,19 @@
                 <div class="row spacer">
 
                     <div class="col-2">
-                        <label>Network DHCP</label>
+                        <label>DHCP POOL</label>
                     </div>
-                    <div class="col-4">
+                    <div class="col-8">
                         <div class="input-group">
-                            {{form_ios.dhcp_network}}
+                            {% render_field form_ios.dhcp_pool3 class="form-control form-fix-size" placeholder="Pool" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.default_router3 class="form-control form-fix-size" placeholder="IP Address" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.dhcp_network3 class="form-control form-fix-size" placeholder="Network" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.dhcp_mask3 class="form-control form-fix-size" placeholder="Mask" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.dhcp_excluded3 class="form-control form-fix-size" placeholder="IP excluded" required='required' %}
                         </div>
                     </div>
                 </div>
@@ -161,11 +110,15 @@
                 <div class="row spacer">
 
                     <div class="col-2">
-                        <label>Default Router</label>
+                        <label>Interface IP</label>
                     </div>
-                    <div class="col-4">
+                    <div class="col-8">
                         <div class="input-group">
-                            {{form_ios.default_router}}
+                            {% render_field form_ios.port_ip class="form-control form-fix-size" placeholder="interface" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.port_cmd class="form-control form-fix-size" placeholder="ip address" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.port_mask class="form-control form-fix-size" placeholder="ip address" required='required' %}
                         </div>
                     </div>
                 </div>
@@ -174,15 +127,106 @@
                 <div class="row spacer">
 
                     <div class="col-2">
-                        <label>DNS Server DHCP</label>
+                        <label>InterVLAN</label>
                     </div>
-                    <div class="col-4">
+                    <div class="col-8">
                         <div class="input-group">
-                            {{form_ios.dns_server}}
+                            {% render_field form_ios.i_vlan_int class="form-control form-fix-size" placeholder="Interface" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.i_vlan_enc class="form-control form-fix-size" placeholder="Encapsulation" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.i_vlan_cmd class="form-control form-fix-size" placeholder="Ip address" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.i_vlan_mask class="form-control form-fix-size" placeholder="Mask" required='required' %}
                         </div>
                     </div>
                 </div>
             </div>
+            <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>InterVLAN</label>
+                    </div>
+                    <div class="col-8">
+                        <div class="input-group">
+                            {% render_field form_ios.i_vlan_int2 class="form-control form-fix-size" placeholder="interface" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.i_vlan_enc2 class="form-control form-fix-size" placeholder="Encapsulation" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.i_vlan_cmd2 class="form-control form-fix-size" placeholder="Ip Address" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.i_vlan_mask2 class="form-control form-fix-size" placeholder="Mask" required='required' %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>OSPF</label>
+                    </div>
+                    <div class="col-8">
+                        <div class="input-group">
+                            {% render_field form_ios.ospf_area class="form-control form-fix-size" placeholder="OSPF area" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.ospf_network class="form-control form-fix-size" placeholder="Network" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.ospf_mask class="form-control form-fix-size" placeholder="Mask" required='required' %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>OSPF</label>
+                    </div>
+                    <div class="col-8">
+                        <div class="input-group">
+                            {% render_field form_ios.ospf_area2 class="form-control form-fix-size" placeholder="OSPF area" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.ospf_network2 class="form-control form-fix-size" placeholder="Network" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.ospf_mask2 class="form-control form-fix-size" placeholder="Mask" required='required' %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>OSPF</label>
+                    </div>
+                    <div class="col-8">
+                        <div class="input-group">
+                            {% render_field form_ios.ospf_area3 class="form-control form-fix-size" placeholder="OSPF area" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.ospf_network3 class="form-control form-fix-size" placeholder="Network" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form_ios.ospf_mask3 class="form-control form-fix-size" placeholder="Mask" required='required' %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>IP Default Gateway</label>
+                    </div>
+                    <div class="col-8">
+                        <div class="input-group">
+                            {% render_field form_ios.default_gateway class="form-control form-fix-size" placeholder="IP Default Gateway" required='required' %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            
 
              <div class="form-group text-center">
              <button class="btn btn-outline-info" type="submit">Create</button>

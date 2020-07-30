@@ -219,10 +219,10 @@ def arpconfig(request):
 def autoconf(device, akun):
     print("Starting AutoConfiguration")
     time.sleep(10)
-    host = AnsibleNetworkHost.objects.get(id=device)
-    os = host.group.ansible_network_os
-    tipe = host.device_type
-    print(host.host)
+    hos = AnsibleNetworkHost.objects.get(id=device)
+    os = hos.group.ansible_network_os
+    tipe = hos.device_type
+    print(hos.host)
     jumlah = arp.objects.all().filter(device_id=device)
     cannot = len(jumlah)
     ulang = True
@@ -238,7 +238,7 @@ def autoconf(device, akun):
                 print(change)
                 my_play = dict(
                     name="Ping broadcast",
-                    hosts=host.host,
+                    hosts=hos.host,
                     become='yes',
                     become_method='enable',
                     gather_facts='no',
@@ -252,7 +252,7 @@ def autoconf(device, akun):
                 result1 = execute(my_play)
             my_play2 = dict(
                 name="show arp",
-                hosts=host.host,
+                hosts=hos.host,
                 become='yes',
                 become_method='enable',
                 gather_facts='no',
@@ -279,7 +279,7 @@ def autoconf(device, akun):
                     coba = arp(ipadd=ip,
                                 mac=mac,
                                 port=portt,
-                                device_id=host)
+                                device_id=hos)
                     coba.save()
                 bookeds = devices.objects.filter(device_id=device, stats='Booked').values_list('new_device_mac')
                 m_max = len(bookeds)
@@ -335,77 +335,11 @@ def autoconf(device, akun):
                         print(Mikrotik_os)
                         if Cisco_os == True and dtype == 'router' and matching > 0:
                             grup = AnsibleNetworkGroup.objects.get(name='Cisco')
-                            savehost = AnsibleNetworkHost(host=cons,
-                                                ansible_ssh_host=add_ip_ok,
-                                                ansible_user='admin',
-                                                ansible_ssh_pass='cisco',
-                                                ansible_become_pass='cisco',
-                                                device_type=de_type,
-                                                group=grup)
-                            savehost.save()
-                            conf = iosrouter.objects.get(name=cons)
-                            my_play = dict(
-                                    name="hostname",
-                                    hosts=cons,
-                                    become='yes',
-                                    become_method='enable',
-                                    gather_facts='no',
-                                    vars=[
-                                        dict(ansible_command_timeout=120)
-                                    ],
-                                    tasks=[
-                                        dict(action=dict(module='ios_config', commands=conf.hostname)),
-                                        dict(action=dict(module='ios_config', commands=conf.port_cmd, parents=conf.port_ip)),
-                                        dict(action=dict(module='ios_config', commands=conf.ospf_network+" area "+conf.ospf_area, parents=conf.ospf))
-                                        ]
-                                    )
-                            result = execute(my_play)
-                            kondisi = result.stats
-                            kond = kondisi['hosts'][0]['status']
-                            if kond == 'ok':
-                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
-                            else:
-                                fail = result.results
-                                err = fail['failed'][0]['tasks'][0]['result']['msg']
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
-                                print(f'{err}')
+                            ciscorouter(cons, de_type, grup, add_ip_ok, mac_matching, akun, hos)
+                            
                         elif Cisco_os == True and dtype == 'switch' and matching > 0:
                             grup = AnsibleNetworkGroup.objects.get(name='Cisco')
-                            savehost = AnsibleNetworkHost(host=cons,
-                                                    ansible_ssh_host=add_ip_ok,
-                                                    ansible_user='admin',
-                                                    ansible_ssh_pass='cisco',
-                                                    ansible_become_pass='cisco',
-                                                    device_type=de_type,
-                                                    group=grup)
-                            savehost.save()
-                            conf = ios_switch.objects.get(name=cons)
-                            my_play = dict(
-                                    name="hostname",
-                                    hosts=cons,
-                                    become='yes',
-                                    become_method='enable',
-                                    gather_facts='no',
-                                    vars=[
-                                        dict(ansible_command_timeout=120)
-                                    ],
-                                    tasks=[
-                                        dict(action=dict(module='ios_config', commands=conf.hostname)),
-                                        dict(action=dict(module='ios_vlan', vlan_id=conf.vlan_id, name=conf.vlan_name))
-                                    ]
-                                )
-                            result = execute(my_play)
-                            kondisi = result.stats
-                            kond = kondisi['hosts'][0]['status']
-                            if kond == 'ok':
-                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
-                            else:
-                                fail = result.results
-                                err = fail['failed'][0]['tasks'][0]['result']['msg']
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
-                                print(f'{err}')
+                            ciscoswitch(cons, de_type, grup, add_ip_ok, mac_matching, akun, hos)
                         elif Huawei_os == True and dtype == 'router' and matching > 0:
                             grup = AnsibleNetworkGroup.objects.get(name='Huawei')
                             savehost = AnsibleNetworkHost(host=cons,
@@ -436,51 +370,16 @@ def autoconf(device, akun):
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
                                 devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
                                 fail = result.results
                                 err = fail['failed'][0]['tasks'][0]['result']['msg']
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
                                 print(f'{err}')
                         elif Huawei_os == True and dtype == 'switch' and matching > 0:
                             grup = AnsibleNetworkGroup.objects.get(name='Huawei')
-                            savehost = AnsibleNetworkHost(host=cons,
-                                                ansible_ssh_host=add_ip_ok,
-                                                ansible_user='admin',
-                                                ansible_ssh_pass='huawei12345',
-                                                ansible_become_pass='huawei12345',
-                                                device_type=de_type,
-                                                group=grup)
-                            savehost.save()
-                            print(host)
-                            conf = ios_switch.objects.get(name=cons)
-                            my_play = dict(
-                                    name="hostname",
-                                    hosts=cons,
-                                    become='yes',
-                                    become_method='enable',
-                                    gather_facts='no',
-                                    vars=[
-                                        dict(ansible_command_timeout=120)
-                                    ],
-                                    tasks=[
-                                        dict(action=dict(module='ce_config', commands='sysname '+conf.hostname)),
-                                        dict(action=dict(module='ce_config', lines=['vlan '+conf.vlan_id, 'description '+conf.vlan_name]))
-                                        ]
-                                    )
-                            result = execute(my_play)
-                            print(conf.name)
-                            print(result.results)
-                            kondisi = result.stats
-                            kond = kondisi['hosts'][0]['status']
-                            if kond == 'ok':
-                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
-                            else:
-                                fail = result.results
-                                err = fail['failed'][0]['tasks'][0]['result']['msg']
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
-                                print(f'{err}')
+                            huaweiswitch(cons, add_ip_ok, de_type, grup, mac_matching, akun, host)
+
                         elif Mikrotik_os == True and dtype == 'router' and matching > 0:
                             grup = AnsibleNetworkGroup.objects.get(name='Mikrotik')
                             savehost = AnsibleNetworkHost(host=cons,
@@ -534,7 +433,7 @@ def autoconf(device, akun):
                 print(change)
                 my_play = dict(
                     name="Ping broadcast",
-                    hosts=host.host,
+                    hosts=hos.host,
                     become='yes',
                     become_method='enable',
                     gather_facts='no',
@@ -548,7 +447,7 @@ def autoconf(device, akun):
                 result1 = execute(my_play)
             my_play2 = dict(
                 name="show arp",
-                hosts=host.host,
+                hosts=hos.host,
                 become='yes',
                 become_method='enable',
                 gather_facts='no',
@@ -575,7 +474,7 @@ def autoconf(device, akun):
                     coba = arp(ipadd=ip,
                                 mac=mac,
                                 port=portt,
-                                device_id=host)
+                                device_id=hos)
                     coba.save()
                 bookeds = devices.objects.filter(device_id=device, stats='Booked').values_list('new_device_mac')
                 m_max = len(bookeds)
@@ -593,6 +492,9 @@ def autoconf(device, akun):
                     mac_arp.append(del1)
                 inter = set.intersection(set(mac_arp), set(mac_booked))
                 match = list(inter)
+                print(mac_arp)
+                print(mac_booked)
+                print(match)
                 jumlah = len(match)
                 if jumlah > 0:
                     ulang = False
@@ -633,81 +535,12 @@ def autoconf(device, akun):
                         print(Cisco_os)
                         print(Mikrotik_os)
                         if Cisco_os == True and dtype == 'router' and matching == True:
-                            grup = AnsibleNetworkGroup.objects.get(name='Cisco')
-                            savehost = AnsibleNetworkHost(host=cons,
-                                                ansible_ssh_host=add_ip_ok,
-                                                ansible_user='admin',
-                                                ansible_ssh_pass='cisco',
-                                                ansible_become_pass='cisco',
-                                                device_type=de_type,
-                                                group=grup)
-                            savehost.save()
-                            print(savehost)
-                            conf = iosrouter.objects.get(name=cons)
-                            my_play = dict(
-                                    name="hostname",
-                                    hosts=cons,
-                                    become='yes',
-                                    become_method='enable',
-                                    gather_facts='no',
-                                    vars=[
-                                        dict(ansible_command_timeout=120)
-                                    ],
-                                    tasks=[
-                                        dict(action=dict(module='ios_config', commands='hostname '+conf.hostname)),
-                                        dict(action=dict(module='ios_config', commands='ip add '+conf.port_cmd, parents='int '+conf.port_ip)),
-                                        dict(action=dict(module='ios_config', commands='network '+conf.ospf_network+" area "+conf.ospf_area, parents='router ospf'+conf.ospf))
-                                        ]
-                                    )
-                            result = execute(my_play)
-                            print(result.results)
-                            kondisi = result.stats
-                            kond = kondisi['hosts'][0]['status']
-                            print(kond)
-                            if kond == 'ok':
-                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
-                            else:
-                                fail = result.results
-                                err = fail['failed'][0]['tasks'][0]['result']['msg']
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
-                                print(f'{err}')
+                            ciscorouter(cons, de_type, add_ip_ok, findmac, akun, hos)
+                            
                         elif Cisco_os == True and dtype == 'switch' and matching == True:
                             grup = AnsibleNetworkGroup.objects.get(name='Cisco')
-                            savehost = AnsibleNetworkHost(host=cons,
-                                                    ansible_ssh_host=add_ip,
-                                                    ansible_user='admin',
-                                                    ansible_ssh_pass='cisco',
-                                                    ansible_become_pass='cisco',
-                                                    device_type=de_type,
-                                                    group=grup)
-                            savehost.save()
-                            conf = ios_switch.objects.get(name=cons)
-                            my_play = dict(
-                                    name="hostname",
-                                    hosts=cons,
-                                    become='yes',
-                                    become_method='enable',
-                                    gather_facts='no',
-                                    vars=[
-                                        dict(ansible_command_timeout=120)
-                                    ],
-                                    tasks=[
-                                        dict(action=dict(module='ios_config', commands=conf.hostname)),
-                                        dict(action=dict(module='ios_vlan', vlan_id=conf.vlan_id, name=conf.vlan_name))
-                                    ]
-                                )
-                            result = execute(my_play)
-                            kondisi = result.stats
-                            kond = kondisi['hosts'][0]['status']
-                            if kond == 'ok':
-                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
-                            else:
-                                fail = result.results
-                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
-                                print(f'{err}')
+                            ciscoswitch(cons, de_type, grup, add_ip_ok, findmac, akun, hos)
+
                         elif Huawei_os == True and dtype == 'router' and matching == True:
                             grup = AnsibleNetworkGroup.objects.get(name='Huawei')
                             savehost = AnsibleNetworkHost(host=cons,
@@ -738,52 +571,16 @@ def autoconf(device, akun):
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
                                 devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
                                 fail = result.results
                                 err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
                                 print(f'{err}')
                         elif Huawei_os == True and dtype == 'switch' and matching == True:
                             grup = AnsibleNetworkGroup.objects.get(name='Huawei')
-                            savehost = AnsibleNetworkHost(host=cons,
-                                                ansible_ssh_host=add_ip,
-                                                ansible_user='admin',
-                                                ansible_ssh_pass='huawei12345',
-                                                ansible_become_pass='54541691',
-                                                device_type=de_type,
-                                                group=grup)
-                            savehost.save()
-                            print(host)
-                            conf = ce_switch.objects.get(name=cons)
-                            my_play = dict(
-                                    name="hostname",
-                                    hosts=cons,
-                                    become='yes',
-                                    become_method='enable',
-                                    gather_facts='no',
-                                    vars=[
-                                        dict(ansible_command_timeout=120)
-                                    ],
-                                    tasks=[
-                                        dict(action=dict(module='ce_config', commands=conf.hostname)),
-                                        dict(action=dict(module='ce_config', commands=conf.vlan)),
-                                        dict(action=dict(module='ce_config', lines=[conf.port_ip, conf.port_cmd1, conf.port_vlan]))
-                                        ]
-                                    )
-                            result = execute(my_play)
-                            print(conf.name)
-                            print(result.results)
-                            kondisi = result.stats
-                            kond = kondisi['hosts'][0]['status']
-                            if kond == 'ok':
-                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
-                            else:
-                                fail = result.results
-                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
-                                print(f'{err}')
+                            huaweiswitch(cons, add_ip_ok, de_type, grup, mac_matching, akun, hos)
+
                         elif Mikrotik_os == True and dtype == 'router' and matching == True:
                             grup = AnsibleNetworkGroup.objects.get(name='Mikrotik')
                             savehost = AnsibleNetworkHost(host=cons,
@@ -816,14 +613,14 @@ def autoconf(device, akun):
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
                                 devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
                                 fail = result.results
                                 err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
                                 print(f'{err}')
                         else:
-                            logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages='Port Tidak Sesuai')
+                            logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages='Port Tidak Sesuai')
         elif os == 'ce' and de_type == 'switch':
             arp.objects.filter(device_id=device).delete()
             broadcast = devices.objects.filter(device_id=device, port='Vlanif1').values_list('ipadd')
@@ -835,7 +632,7 @@ def autoconf(device, akun):
                 print(change)
                 my_play = dict(
                     name="Ping broadcast",
-                    hosts=host.host,
+                    hosts=hos.host,
                     become='yes',
                     become_method='enable',
                     gather_facts='no',
@@ -849,7 +646,7 @@ def autoconf(device, akun):
                 result1 = execute(my_play)
             my_play2 = dict(
                 name="show arp",
-                hosts=host.host,
+                hosts=hos.host,
                 become='yes',
                 become_method='enable',
                 gather_facts='no',
@@ -879,7 +676,7 @@ def autoconf(device, akun):
                     coba = arp(ipadd=ip,
                                 mac=mac,
                                 port=portt,
-                                device_id=host)
+                                device_id=hos)
                     coba.save()
                 bookeds = devices.objects.filter(device_id=device, stats='Booked').values_list('new_device_mac')
                 m_max = len(bookeds)
@@ -930,7 +727,7 @@ def autoconf(device, akun):
                         print(t_os)
                         print(matching)
                         print(dtype)
-                        print(host.group)
+                        print(hos.group)
                         Huawei_os = "Huawei" in t_os
                         Cisco_os = "Cisco" in t_os
                         Mikrotik_os= "Mikrotik" in t_os
@@ -939,42 +736,8 @@ def autoconf(device, akun):
                         print(Mikrotik_os)
                         if Cisco_os == True and dtype == 'router' and matching > 0:
                             grup = AnsibleNetworkGroup.objects.get(name='Cisco')
-                            print('dicisco')
-                            savehost = AnsibleNetworkHost(host=cons,
-                                                ansible_ssh_host=add_ip_ok,
-                                                ansible_user='admin',
-                                                ansible_ssh_pass='cisco',
-                                                ansible_become_pass='cisco',
-                                                device_type=de_type,
-                                                group=grup)
-                            savehost.save()
-                            conf = iosrouter.objects.get(name=cons)
-                            my_play = dict(
-                                    name="hostname",
-                                    hosts=cons,
-                                    become='yes',
-                                    become_method='enable',
-                                    gather_facts='no',
-                                    vars=[
-                                        dict(ansible_command_timeout=120)
-                                    ],
-                                    tasks=[
-                                        dict(action=dict(module='ios_config', commands=conf.hostname)),
-                                        dict(action=dict(module='ios_config', commands=conf.port_cmd, parents=conf.port_ip)),
-                                        dict(action=dict(module='ios_config', commands=conf.ospf_network+" area "+conf.ospf_area, parents=conf.ospf))
-                                        ]
-                                    )
-                            result = execute(my_play)
-                            kondisi = result.stats
-                            kond = kondisi['hosts'][0]['status']
-                            if kond == 'ok':
-                                devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
-                            else:
-                                fail = result.results
-                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
-                                print(f'{err}')
+                            ciscorouter(cons, de_type, grup, add_ip_ok, findmac, akun, hos)
+
                         elif Huawei_os == True and dtype == 'router' and matching == True:
                             grup = AnsibleNetworkGroup.objects.get(name='Huawei')
                             print("huawei router")
@@ -1009,90 +772,20 @@ def autoconf(device, akun):
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
                                 devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
                                 fail = result.results
                                 err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
                                 print(f'{err}')
                         elif Huawei_os == True and dtype == 'switch' and matching == True:
                             grup = AnsibleNetworkGroup.objects.get(name='Huawei')
                             print('huawei switch')
-                            savehost = AnsibleNetworkHost(host=cons,
-                                                ansible_ssh_host=add_ip_ok,
-                                                ansible_user='admin',
-                                                ansible_ssh_pass='huawei12345',
-                                                ansible_become_pass='huawei12345',
-                                                device_type=de_type,
-                                                group=grup)
-                            savehost.save()
-                            print(host)
-                            conf = ce_switch.objects.get(name=cons)
-                            my_play = dict(
-                                    name="hostname",
-                                    hosts=cons,
-                                    become='yes',
-                                    become_method='enable',
-                                    gather_facts='no',
-                                    vars=[
-                                        dict(ansible_command_timeout=120)
-                                    ],
-                                    tasks=[
-                                        dict(action=dict(module='ce_config', commands=conf.hostname)),
-                                        dict(action=dict(module='ce_config', commands=conf.vlan)),
-                                        dict(action=dict(module='ce_config', lines=[conf.port_ip, conf.port_cmd1, conf.port_vlan]))
-                                        ]
-                                    )
-                            result = execute(my_play)
-                            print(conf.name)
-                            print(result.results)
-                            kondisi = result.stats
-                            kond = kondisi['hosts'][0]['status']
-                            if kond == 'ok':
-                                devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
-                            else:
-                                fail = result.results
-                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
-                                print(f'{err}')
+                            huaweiswitch(cons, add_ip_ok, de_type, grup, mac_matching, akun, hos)
                         elif Cisco_os == True and dtype == 'switch' and matching == True:
                             grup = AnsibleNetworkGroup.objects.get(name='Cisco')
-                            print('cisco switch')
-                            savehost = AnsibleNetworkHost(host=cons,
-                                                    ansible_ssh_host=add_ip_ok,
-                                                    ansible_user='admin',
-                                                    ansible_ssh_pass='cisco',
-                                                    ansible_become_pass='cisco',
-                                                    device_type=de_type,
-                                                    group=grup)
-                            savehost.save()
-                            conf = ios_switch.objects.get(name=cons)
-                            my_play = dict(
-                                    name="hostname",
-                                    hosts=cons,
-                                    become='yes',
-                                    become_method='enable',
-                                    gather_facts='no',
-                                    vars=[
-                                        dict(ansible_command_timeout=120)
-                                    ],
-                                    tasks=[
-                                        dict(action=dict(module='ios_config', commands=conf.hostname)),
-                                        dict(action=dict(module='ios_vlan', vlan_id=conf.vlan_id, name=conf.vlan_name))
-                                    ]
-                                )
-                            result = execute(my_play)
-                            kondisi = result.stats
-                            kond = kondisi['hosts'][0]['status']
-                            if kond == 'ok':
-                                devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
-                            else:
-                                fail = result.results
-                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
-                                print(f'{err}')
+                            ciscoswitch(cons, de_type, grup, add_ip_ok, findmac, akun, hos)
+
                         elif Mikrotik_os == True and dtype == 'router' and matching == True:
                             grup = AnsibleNetworkGroup.objects.get(name='Mikrotik')
                             print('mikrotik router')
@@ -1126,16 +819,16 @@ def autoconf(device, akun):
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
                                 devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
                                 fail = result.results
                                 err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
                                 print(f'{err}')
         elif os == 'routeros':
             arp.objects.filter(device_id=device).delete()
             my_play = dict(name="show arp",
-                            host=host.host,
+                            host=hos.host,
                             become='yes',
                             become_method='enable',
                             gather_facts='no',
@@ -1227,41 +920,8 @@ def autoconf(device, akun):
                         print(Mikrotik_os)
                         if Cisco_os == True and dtype == 'router' and matching == True:
                             grup = AnsibleNetworkGroup.objects.get(name='Cisco')
-                            savehost = AnsibleNetworkHost(host=cons,
-                                                ansible_ssh_host=add_ip_ok,
-                                                ansible_user='indra',
-                                                ansible_ssh_pass='cisco',
-                                                ansible_become_pass='cisco',
-                                                device_type=de_type,
-                                                group=grup)
-                            savehost.save()
-                            conf = iosrouter.objects.get(name=cons)
-                            my_play = dict(
-                                    name="hostname",
-                                    hosts=cons,
-                                    become='yes',
-                                    become_method='enable',
-                                    gather_facts='no',
-                                    vars=[
-                                        dict(ansible_command_timeout=120)
-                                    ],
-                                    tasks=[
-                                        dict(action=dict(module='ios_config', commands=conf.hostname)),
-                                        dict(action=dict(module='ios_config', commands=conf.port_cmd, parents=conf.port_ip)),
-                                        dict(action=dict(module='ios_config', commands=conf.ospf_network+" area "+conf.ospf_area, parents=conf.ospf))
-                                        ]
-                                    )
-                            result = execute(my_play)
-                            kondisi = result.stats
-                            kond = kondisi['hosts'][0]['status']
-                            if kond == 'ok':
-                                devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
-                            else:
-                                fail = result.results
-                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
-                                print(f'{err}')
+                            ciscorouter(cons, de_type, grup, add_ip_ok, findmac, akun, hos)
+
                         elif Huawei_os == True and dtype == 'router' and matching == True:
                             grup = AnsibleNetworkGroup.objects.get(name='Huawei')
                             savehost = AnsibleNetworkHost(host=cons,
@@ -1272,7 +932,7 @@ def autoconf(device, akun):
                                                 device_type=de_type,
                                                 group=grup)
                             savehost.save()
-                            print(host)
+                            print(hos)
                             conf = ce_router.objects.get(name=cons)
                             my_play = dict(
                                     name="hostname",
@@ -1295,88 +955,20 @@ def autoconf(device, akun):
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
                                 devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
                                 fail = result.results
                                 err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
                                 print(f'{err}')
                         elif Huawei_os == True and dtype == 'switch' and matching == True:
                             grup = AnsibleNetworkGroup.objects.get(name='Huawei')
-                            savehost = AnsibleNetworkHost(host=cons,
-                                                ansible_ssh_host=add_ip_ok,
-                                                ansible_user='admin',
-                                                ansible_ssh_pass='huawei12345',
-                                                ansible_become_pass='huawei12345',
-                                                device_type=de_type,
-                                                group=grup)
-                            savehost.save()
-                            print(host)
-                            conf = ce_switch.objects.get(name=cons)
-                            my_play = dict(
-                                    name="hostname",
-                                    hosts=cons,
-                                    become='yes',
-                                    become_method='enable',
-                                    gather_facts='no',
-                                    vars=[
-                                        dict(ansible_command_timeout=120)
-                                    ],
-                                    tasks=[
-                                        dict(action=dict(module='ce_config', commands=conf.hostname)),
-                                        dict(action=dict(module='ce_config', commands=conf.vlan)),
-                                        dict(action=dict(module='ce_config', lines=[conf.port_ip, conf.port_cmd1, conf.port_vlan]))
-                                        ]
-                                    )
-                            result = execute(my_play)
-                            print(conf.name)
-                            print(result.results)
-                            kondisi = result.stats
-                            kond = kondisi['hosts'][0]['status']
-                            if kond == 'ok':
-                                devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
-                            else:
-                                fail = result.results
-                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
-                                print(f'{err}')
+                            huaweiswitch(cons, add_ip_ok, de_type, grup, mac_matching, akun, hos)
+
                         elif Cisco_os == True and dtype == 'switch' and matching == True:
                             grup = AnsibleNetworkGroup.objects.get(name='Cisco')
-                            savehost = AnsibleNetworkHost(host=cons,
-                                                    ansible_ssh_host=add_ip_ok,
-                                                    ansible_user='indra',
-                                                    ansible_ssh_pass='cisco',
-                                                    ansible_become_pass='cisco',
-                                                    device_type=de_type,
-                                                    group=grup)
-                            savehost.save()
-                            conf = ios_switch.objects.get(name=cons)
-                            my_play = dict(
-                                    name="hostname",
-                                    hosts=cons,
-                                    become='yes',
-                                    become_method='enable',
-                                    gather_facts='no',
-                                    vars=[
-                                        dict(ansible_command_timeout=120)
-                                    ],
-                                    tasks=[
-                                        dict(action=dict(module='ios_config', commands=conf.hostname)),
-                                        dict(action=dict(module='ios_vlan', vlan_id=conf.vlan_id, name=conf.vlan_name))
-                                    ]
-                                )
-                            result = execute(my_play)
-                            kondisi = result.stats
-                            kond = kondisi['hosts'][0]['status']
-                            if kond == 'ok':
-                                devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
-                            else:
-                                fail = result.results
-                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
-                                print(f'{err}')
+                            ciscoswitch(cons, de_type, grup, add_ip_ok, findmac, akun, hos)
+
                         elif Mikrotik_os == True and dtype == 'router' and matching == True:
                             grup = AnsibleNetworkGroup.objects.get(name='Mikrotik')
                             savehost = AnsibleNetworkHost(host=cons,
@@ -1409,9 +1001,196 @@ def autoconf(device, akun):
                             kond = kondisi['hosts'][0]['status']
                             if kond == 'ok':
                                 devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
+                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
                             else:
                                 fail = result.results
                                 err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
+                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
                                 print(f'{err}')
+
+
+def ciscorouter(cons, de_type, add_ip_ok, mac_matching, akun, hos):
+    grup = AnsibleNetworkGroup.objects.get(name='Cisco')
+    savehost = AnsibleNetworkHost(host=cons,
+                ansible_ssh_host=add_ip_ok,
+                ansible_user='admin',
+                ansible_ssh_pass='cisco',
+                ansible_become_pass='cisco',
+                device_type=de_type,
+                group=grup)
+    savehost.save()
+    conf = iosrouter.objects.get(name=cons)
+    my_play = dict(
+        name="autoconf",
+        hosts=cons,
+        become='yes',
+        become_method='enable',
+        gather_facts='no',
+        vars=[
+            dict(ansible_command_timeout=500)
+        ],
+        tasks=[
+            dict(action=dict(module='ios_config', commands='hostname '+conf.hostname)),
+            dict(action=dict(module='ios_config', lines=['default-router '+conf.default_router, 'network '+conf.dhcp_network+' '+conf.dhcp_mask], parents='ip dhcp pool '+conf.dhcp_pool)),
+            dict(action=dict(module='ios_config', lines=['default-router '+conf.default_router2, 'network '+conf.dhcp_network2+' '+conf.dhcp_mask2], parents='ip dhcp pool '+conf.dhcp_pool2)),
+            dict(action=dict(module='ios_config', lines=['default-router '+conf.default_router3, 'network '+conf.dhcp_network3+' '+conf.dhcp_mask3], parents='ip dhcp pool '+conf.dhcp_pool3)),
+            dict(action=dict(module='ios_config', commands='ip dhcp excluded-address '+conf.dhcp_excluded)),
+            dict(action=dict(module='ios_config', commands='ip dhcp excluded-address '+conf.dhcp_excluded2)),
+            dict(action=dict(module='ios_config', commands='ip dhcp excluded-address '+conf.dhcp_excluded3)),
+            dict(action=dict(module='ios_config', lines=['encapsulation dot1q '+conf.i_vlan_enc, 'ip address '+conf.i_vlan_cmd+' '+conf.i_vlan_mask], parents='int '+conf.i_vlan_int)),
+            dict(action=dict(module='ios_config', lines=['encapsulation dot1q '+conf.i_vlan_enc2, 'ip address '+conf.i_vlan_cmd2+' '+conf.i_vlan_mask2], parents='int '+conf.i_vlan_int2)),
+            dict(action=dict(module='ios_config', lines=['ip address '+conf.port_cmd+' '+conf.port_mask, 'no sh'], parents='int '+conf.port_ip)),
+            dict(action=dict(module='ios_config', lines='network '+conf.ospf_network+' '+conf.ospf_mask+' area '+conf.ospf_area, parents='router ospf 1')),
+            dict(action=dict(module='ios_config', lines='network '+conf.ospf_network2+' '+conf.ospf_mask2+' area '+conf.ospf_area2, parents='router ospf 1')),
+            dict(action=dict(module='ios_config', lines='network '+conf.ospf_network3+' '+conf.ospf_mask3+' area '+conf.ospf_area3, parents='router ospf 1')),
+            dict(action=dict(module='ios_config', commands='ip route 0.0.0.0 0.0.0.0 '+conf.default_gateway)),
+            dict(action=dict(module='ios_config', commands='ip scp server enable')),
+            dict(action=dict(module='ios_config', commands='ip address '+add_ip_ok+' 255.255.255.0', parents='int g0/0'))
+        ]
+    )
+    result=execute(my_play)
+    print(my_play)
+    kondisi = result.stats
+    kond = kondisi['hosts'][0]['status']
+    print(result.results)
+    if kond == 'ok':
+        devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
+        logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Success')
+    else:
+        fail = result.results
+        err = fail['failed'][0]['tasks'][0]['result']['msg']
+        logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Failed', messages=err)
+        print(f'{err}')
+
+
+def ciscoswitch(cons, add_ip_ok, de_type, grup, host, mac_matching, akun):
+    savehost = AnsibleNetworkHost(host=cons,
+            ansible_ssh_host=add_ip_ok,
+            ansible_user='admin',
+            ansible_ssh_pass='cisco',
+            ansible_become_pass='cisco',
+            device_type=de_type,
+            group=grup)
+    savehost.save()
+    conf = ios_switch.objects.get(name=cons)
+    my_play = dict(
+        name="Autoconfig",
+        hosts=cons,
+        become='yes',
+        become_method='enable',
+        gather_facts='no',
+        vars=[
+            dict(ansible_command_timeout=120)
+        ],
+        tasks=[
+            dict(action=dict(module='ios_vlan', vlan_id=conf.vlan_id, name=conf.vlan_name)),
+            dict(action=dict(module='ios_vlan', vlan_id=conf.vlan_id2, name=conf.vlan_name2)),
+            dict(action=dict(module='ios_vlan', vlan_id=conf.vlan_id3, name=conf.vlan_name3)),
+            dict(action=dict(module='ios_config', lines=['sw mo '+conf.mode, 'sw ac vl '+conf.vlan], parents='int '+conf.interface)),
+            dict(action=dict(module='ios_config', lines=['sw mo '+conf.mode2, 'sw ac vl '+conf.vlan2], parents='int '+conf.interface2)),
+            dict(action=dict(module='ios_config', commands='ip scp server enable')),
+            dict(action=dict(module='ios_config', commands='ip default-gateway '+conf.gateway)),
+            dict(action=dict(module='ios_config', lines=['ip add '+add_ip_ok+' 255.255.255.0'], parents='int fa0/1'))
+        ]
+    )
+    result = execute(my_play)
+    kondisi = result.stats
+    kond = kondisi['hosts'][0]['status']
+    if kond == 'ok':
+        devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
+        logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='Success')
+    else:
+        fail = result.results
+        err = fail['failed'][0]['tasks'][0]['result']['msg']
+        logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='Failed', messages=err)
+        print(f'{err}')	
+
+
+def huaweiswitch(cons, add_ip_ok, de_type, grup, mac_matching, akun, host):
+    savehost = AnsibleNetworkHost(host=cons,
+            ansible_ssh_host=add_ip_ok,
+            ansible_user='admin',
+            ansible_ssh_pass='huawei12345',
+            ansible_become_pass='huawei12345',
+            device_type=de_type,
+            group=grup)
+    savehost.save()
+    conf = ios_switch.objects.get(name=cons)
+    my_play=dict(
+        name="Autoconfig",
+        hosts=cons,
+        become='yes',
+        become_method='enable',
+        gather_facts='no',
+        vars=[
+            dict(ansible_command_timeout=120)
+        ],
+        tasks=[
+            dict(action=dict(module='ce_config', lines=['interface '.conf.interface, 'port link-type '+conf.mode])),
+            dict(action=dict(module='ce_config', lines=['interface '.conf.interface2, 'port link-type '+conf.mode2])),
+            dict(action=dict(module='ce_config', lines=['vlan '+conf.vlan, 'port '+interface])),
+            dict(action=dict(module='ce_config', lines=['vlan '+conf.vlan2, 'port '+interface2])),
+            dict(action=dict(module='ce_config', lines=['vlan '+conf.vlan_id, 'description '+vlan_name])),
+            dict(action=dict(module='ce_config', lines=['vlan '+conf.vlan_id2, 'description '+vlan_name2])),
+            dict(action=dict(module='ce_config', lines=['vlan '+conf.vlan_id3, 'description '+vlan_name3])),
+            dict(action=dict(module='ce_config', lines=['lldp enable'])),
+            dict(action=dict(module='ce_config', lines=['ip route-static 0.0.0.0 0.0.0.0 '+conf.gateway])),
+            dict(action=dict(module='ce_config', lines=['scp server enable'])),
+            dict(action=dict(module='ce_config', lines=['int g0/1', 'ip address '+add_ip_ok+' 255.255.255.0']))
+        ]
+    )
+    result=execute(my_play)
+    kondisi = result.stats
+    kond = kondisi['hosts'][0]['status']
+    if kond == 'ok':
+        devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
+        logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='Success')
+    else:
+        fail = result.results
+        err = fail['failed'][0]['tasks'][0]['result']['msg']
+        logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='Failed', messages=err)
+        print(f'{err}')
+
+def mikrotikrouter():
+    savehost = AnsibleNetworkHost(host=cons,
+                ansible_ssh_host=add_ip_ok,
+                ansible_user='mikrotik',
+                ansible_ssh_pass='54541691',
+                ansible_become_pass='54541691',
+                device_type=de_type,
+                group=grup)
+    savehost.save()
+    conf = ios_router.objects.get(name=cons)
+    my_play = dict(
+        name="Autoconfig",
+        hosts=cons,
+        become='yes',
+        become_method='enable',
+        gather_facts='no',
+        vars=[
+            dict(ansible_command_timeout=120)
+        ],
+        tasks=[
+            dict(action=dict(module='routeros_command', commands='/ip pool add name='+conf.dhcp_pool+' ranges='+conf.dhcp_excluded)),
+            dict(action=dict(module='routeros_command', commands='/ip dhcp-server network add address '+conf.dhcp_network+'/'+conf.dhcp_mask+' gateway='+conf.default_router)),
+            dict(action=dict(module='routeros_command', commands='/ip pool add name='+conf.dhcp_pool2+' ranges='+conf.dhcp_excluded2)),
+            dict(action=dict(module='routeros_command', commands='/ip dhcp-server network add address '+conf.dhcp_network2+'/'+conf.dhcp_mask2+' gateway='+conf.default_router2)),
+            dict(action=dict(module='routeros_command', commands='/ip pool add name='+conf.dhcp_pool3+' ranges='+conf.dhcp_excluded3)),
+            dict(action=dict(module='routeros_command', commands='/ip dhcp-server network add address '+conf.dhcp_network3+'/'+conf.dhcp_mask3+' gateway='+conf.default_router3))
+        ]
+    )
+    result = execute(my_play)
+    kondisi = result.stats
+    kond = kondisi['hosts'][0]['status']
+    if kond == 'ok':
+        devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
+        logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='Success')
+    else:
+        fail = result.results
+        err = fail['failed'][0]['tasks'][0]['result']['msg']
+        logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='Failed', messages=err)
+
+
+
+
+

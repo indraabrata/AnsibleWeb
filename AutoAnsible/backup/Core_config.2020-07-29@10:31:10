@@ -1,21 +1,21 @@
 Building configuration...
 
-Current configuration : 1431 bytes
+Current configuration : 1709 bytes
 !
-! Last configuration change at 06:51:18 UTC Mon Jul 20 2020 by admin
+! Last configuration change at 00:38:53 UTC Mon Jul 27 2020
 !
 version 15.4
 service timestamps debug datetime msec
 service timestamps log datetime msec
 no service password-encryption
 !
-hostname CoreRouter
+hostname Core
 !
 boot-start-marker
 boot-end-marker
 !
 !
-enable secret 5 $1$qASE$h44uhms.0W7DTN02QGFQz0
+enable secret 5 $1$phuB$bygrNrfOgRcRaSKcXT4Zi.
 !
 no aaa new-model
 !
@@ -29,6 +29,16 @@ no aaa new-model
 !
 !
 !
+ip dhcp excluded-address 123.12.1.1
+ip dhcp excluded-address 123.12.2.1
+!
+ip dhcp pool mipa
+ network 123.12.1.0 255.255.255.0
+ default-router 123.12.1.1 
+!
+ip dhcp pool vokasi
+ network 123.12.2.0 255.255.255.0
+ default-router 123.12.2.1 
 !
 !
 !
@@ -46,7 +56,7 @@ license udi pid CISCO2911/K9 sn FGL193210AQ
 license boot module c2900 technology-package securityk9
 !
 !
-username admin secret 5 $1$bj2z$I/S1es6qPOtRQ6Ko9RxZX0
+username admin secret 5 $1$czF.$n16SG3XrpzBl0ovCL1veH0
 !
 redundancy
 !
@@ -79,14 +89,14 @@ interface GigabitEthernet0/1
  speed auto
 !
 interface GigabitEthernet0/2
- no ip address
- shutdown
+ ip address 123.12.2.1 255.255.255.0
  duplex auto
  speed auto
 !
 router ospf 1
  network 10.1.1.0 0.0.0.255 area 0
- network 123.12.1.0 0.0.0.255 area 0
+ network 123.0.0.0 0.255.255.255 area 0
+ network 192.168.0.0 0.0.255.255 area 0
 !
 ip forward-protocol nd
 !

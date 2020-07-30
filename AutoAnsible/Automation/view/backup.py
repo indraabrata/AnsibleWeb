@@ -94,12 +94,13 @@ def backup_act(target, akun,os):
         kondisi = result.stats
         kond = kondisi['hosts'][0]['status']
         print(kond)
+        print(result.results)
         if kond == 'ok':
             logs = log.objects.filter(account=akun, targetss=target, action="Backup Configuration "+target, status='PENDING').update(status='Success')
             print(logs)
         else:
             fail = result.results
-            err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
+            err = fail['failed'][0]['tasks'][0]['result']['msg']
             logs = log.objects.filter(account=akun, targetss=target, action="Backup Configuration "+target, status='PENDING').update(status='Failed', messages=err)
             print(f'{err}')
     elif os == 'routeros':

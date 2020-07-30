@@ -1,21 +1,21 @@
 Building configuration...
 
-Current configuration : 2203 bytes
+Current configuration : 2147 bytes
 !
-! Last configuration change at 09:51:22 UTC Thu Jul 23 2020 by admin
+! Last configuration change at 09:46:13 UTC Wed Jul 29 2020 by admin
 !
 version 15.4
 service timestamps debug datetime msec
 service timestamps log datetime msec
 no service password-encryption
 !
-hostname distribute1
+hostname vokasi
 !
 boot-start-marker
 boot-end-marker
 !
 !
-enable secret 5 $1$oFfZ$htRTcQOJoQESwKMAFaOfi/
+enable secret 5 $1$U7WM$CdFxS0klmmzhJiv3XewS31
 !
 no aaa new-model
 !
@@ -29,21 +29,21 @@ no aaa new-model
 !
 !
 !
-ip dhcp excluded-address 192.168.10.1
-ip dhcp excluded-address 192.168.20.1
-ip dhcp excluded-address 192.168.50.1
+ip dhcp excluded-address 172.16.10.1
+ip dhcp excluded-address 172.16.20.1
+ip dhcp excluded-address 172.16.50.1
 !
 ip dhcp pool mahasiswa
- network 192.168.10.0 255.255.255.0
- default-router 192.168.10.1 
+ network 172.16.10.0 255.255.255.0
+ default-router 172.16.10.1 
 !
 ip dhcp pool dosen
- network 192.168.20.0 255.255.255.0
- default-router 192.168.20.1 
+ network 172.16.20.0 255.255.255.0
+ default-router 172.16.20.1 
 !
 ip dhcp pool switch
- network 192.168.50.0 255.255.255.0
- default-router 192.168.50.1 
+ network 172.16.50.0 255.255.255.0
+ default-router 172.16.50.1 
 !
 !
 !
@@ -57,12 +57,12 @@ multilink bundle-name authenticated
 cts logging verbose
 !
 !
-license udi pid CISCO2911/K9 sn FGL193210AA
+license udi pid CISCO2911/K9 sn FGL193210AP
 license boot module c2900 technology-package securityk9
 !
 !
-username indra secret 5 $1$X57X$Dr8gApDjAQm8GIH178euY.
-username admin secret 5 $1$Go7J$T9zyYjSMmdmGK1vrD5Tan0
+username indra secret 5 $1$zS09$v75AqBfdmxPmwjB3Pzjvh.
+username admin secret 5 $1$SztJ$9RDDzG0p1ztQlSnt4Sal50
 !
 redundancy
 !
@@ -70,6 +70,7 @@ redundancy
 !
 !
 !
+ip scp server enable
 ! 
 !
 !
@@ -85,26 +86,22 @@ interface Embedded-Service-Engine0/0
  shutdown
 !
 interface GigabitEthernet0/0
- ip address 123.12.1.2 255.255.255.0
+ ip address 123.12.2.7 255.255.255.0
  duplex auto
  speed auto
 !
 interface GigabitEthernet0/1
- ip address 192.168.50.1 255.255.255.0
+ ip address 172.16.50.1 255.255.255.0
  duplex auto
  speed auto
 !
 interface GigabitEthernet0/1.10
  encapsulation dot1Q 10
- ip address 192.168.10.1 255.255.255.0
+ ip address 172.16.10.1 255.255.255.0
 !
 interface GigabitEthernet0/1.20
  encapsulation dot1Q 20
- ip address 192.168.20.1 255.255.255.0
-!
-interface GigabitEthernet0/1.90
- encapsulation dot1Q 90
- ip address 123.123.123.2 255.255.255.0
+ ip address 172.16.20.1 255.255.255.0
 !
 interface GigabitEthernet0/2
  no ip address
@@ -114,14 +111,15 @@ interface GigabitEthernet0/2
 !
 router ospf 1
  network 10.1.1.0 0.0.0.255 area 0
- network 123.12.1.0 0.0.0.255 area 0
- network 192.168.0.0 0.0.255.255 area 0
+ network 123.0.0.0 0.255.255.255 area 0
+ network 172.16.0.0 0.0.255.255 area 0
 !
 ip forward-protocol nd
 !
 no ip http server
 no ip http secure-server
 !
+ip route 0.0.0.0 0.0.0.0 123.12.2.1
 !
 !
 !

@@ -86,7 +86,7 @@ def ipstatic(request):
                             dict(ansible_command_timeout=120)
                         ],
                         tasks=[
-                            dict(action=dict(module='ios_config', lines=['ip address '+ip_add+' '+mask, 'no sh'], parents=interface))
+                            dict(action=dict(module='ios_config', lines=['ip address '+ip_add+' '+netmask, 'no sh'], parents=interface))
                         ]
                     )
                     print(my_play)
