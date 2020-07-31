@@ -72,21 +72,25 @@
           
           <div class="col-lg-4">
             <div class="card">
-                <div class="card-header d-flex align-items-center">
-                    <h4>Result Task</h4>
-                </div>
                 <div class="card-body">
-                    {% for hasil in output %}
-                         {{ hasil }}
-                    {% endfor %}
+                    <table class="table">
+                        <tr>
+                            <th>Result Task</th>
+                        </tr>
+                        {% for hasil in output %}
+                             <tr>
+                                 <td>{{ hasil }}</td>            
+                             </tr> 
+                         {% endfor %}
+                    </table>
                 </div>
             </div>
+            
+        </div>
             
             
         </div>
                 
-            </div>
-    </div>
     </div>
   </section>
       {% endblock content %}

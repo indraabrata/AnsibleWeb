@@ -166,7 +166,8 @@ def prekonfig(request, pk):
                 form_ios = ios_router(request.POST)
                 if form_ios.is_valid():
                     data = request.POST
-                    print(request.POST)
+                    datamac = data['mac']
+                    macdata(datamac)
                     coba = iosrouter(name=data['name'],
                                     hostname=data['name'],
 
@@ -219,7 +220,7 @@ def prekonfig(request, pk):
                                     port_id=select)
                     coba.save()
                     idd = select.id
-                    devices.objects.filter(id=idd).update(preconf=data['name'] ,new_device_mac=data['mac'] ,stats='Booked')
+                    devices.objects.filter(id=idd).update(preconf=data['name'] ,new_device_mac=datamac ,stats='Booked')
                     messages.success(request, f'Successfully create PreConfiguration!')
                     return redirect('/')
             else:
@@ -234,11 +235,8 @@ def prekonfig(request, pk):
                 form_ios = ios_router(request.POST)
                 if form_ios.is_valid():
                     data = request.POST
-                    macdata = data['mac']
-                    get1 = macdata.replace("-","")
-                    get2 = get1.replace(".","")
-                    get3 = get2.replace(":","")
-                    get4 = get3.lower()
+                    datamac = data['mac']
+                    macdata(datamac)
                     print(request.POST)
                     iosrouter.objects.filter(port_id=select).update(name=data['name'],
                                                                     hostname=data['name'],
@@ -289,7 +287,7 @@ def prekonfig(request, pk):
                                                                     default_gateway=data['default_gateway'])
 
                     idd = select.id
-                    devices.objects.filter(id=idd).update(preconf=data['name'], new_device_mac=get4, stats='Booked')
+                    devices.objects.filter(id=idd).update(preconf=data['name'], new_device_mac=macdata, stats='Booked')
                     messages.success(request, f'Successfully update PreConfiguration!')
                     return redirect('/')
             else:
@@ -305,11 +303,8 @@ def prekonfig(request, pk):
                 form_ios = ios_switch_form(request.POST)
                 if form_ios.is_valid():
                     data = request.POST
-                    macdata = data['mac']
-                    get1 = macdata.replace("-","")
-                    get2 = get1.replace(".","")
-                    get3 = get2.replace(":","")
-                    get4 = get3.lower()
+                    datamac = data['mac']
+                    macdata(datamac)
                     print(request.POST)
                     coba = ios_switch(name=data['name'],
                                     hostname=data['name'],
@@ -335,7 +330,7 @@ def prekonfig(request, pk):
                                     port_id=select)
                     coba.save()
                     idd = select.id
-                    devices.objects.filter(id=idd).update(preconf=data['name'] ,new_device_mac=get4 ,stats='Booked')
+                    devices.objects.filter(id=idd).update(preconf=data['name'] ,new_device_mac=macdata ,stats='Booked')
                     messages.success(request, f'Successfully create PreConfiguration!')
                     return redirect('/')
             else:
@@ -350,11 +345,8 @@ def prekonfig(request, pk):
                 form_ios = ios_switch_form(request.POST)
                 if form_ios.is_valid():
                     data = request.POST
-                    macdata = data['mac']
-                    get1 = macdata.replace("-","")
-                    get2 = get1.replace(".","")
-                    get3 = get2.replace(":","")
-                    get4 = get3.lower()
+                    datamac = data['mac']
+                    macdata(datamac)
                     print(request.POST)
                     ios_switch.objects.filter(port_id=select).update(name=data['name'],
                                     hostname=data['name'],
@@ -362,7 +354,7 @@ def prekonfig(request, pk):
                                     vlan_name=data['vlan_name'],
                                     port_id=select)
                     idd = select.id
-                    lihat= devices.objects.filter(id=idd).update(preconf=data['name'], new_device_mac=get4 ,stats='Booked')
+                    lihat= devices.objects.filter(id=idd).update(preconf=data['name'], new_device_mac=macdata ,stats='Booked')
                     print(lihat)
                     print(get4)
                     messages.success(request, f'Successfully update PreConfiguration!')
@@ -374,171 +366,6 @@ def prekonfig(request, pk):
                 'form_ios': form_ios
             }
             return render(request, 'ansibleweb/ios_switch_form.html', context)
-    elif cek == 'ce' and tipe == 'router':
-        if state == 'empty':
-            if request.method == 'POST':
-                form_ce = ce_router_form(request.POST)
-                if form_ce.is_valid():
-                    data = request.POST
-                    print(request.POST)
-                    coba = ce_router(name=data['name'],
-                                    hostname='sysname '+data['name'],
-                                    port_ip='int '+data['port_ip'],
-                                    ip_add='ip add '+data['ip_add'],
-                                    i_vlan_int='int '+data['i_vlan_int'],
-                                    i_vlan_ip='ip address '+data['i_vlan_ip'],
-                                    i_vlan_enc='dot1q termination vid '+data['i_vlan_enc'],
-                                    ospf_area='area '+data['ospf_area'],
-                                    ospf_network='network '+data['ospf_network'],
-                                    dhcp_int='int '+data['dhcp_int'],
-                                    dhcp_ipadd ='ip add '+data['dhcp_ipadd'],
-                                    dhcp_server_dnslist ='dhcp server dns-list '+data['dhcp_server_dnslist'],
-                                    dhcp_server_excluded='dhcp server excluded-ip-address '+data['dhcp_server_excluded'],
-                                    port_id=select)
-                    coba.save()
-                    idd = select.id
-                    devices.objects.filter(id=idd).update(preconf=data['name'] ,new_device_mac=data['mac'] ,stats='Booked')
-                    messages.success(request, f'Successfully create PreConfiguration!')
-                    return redirect('/')
-            else:
-                form_ce = ce_router_form()
-                messages.warning(request, f'tidak valid')
-
-            context = {
-                'form_ce': form_ce
-            }
-            return render(request, 'ansibleweb/huawei/ce_router_preconfig.html', context)
-        else:
-            print('TIDAK VALID')
-            if request.method == 'POST':
-                form_ce = ce_router_form(request.POST)
-                if form_ce.is_valid():
-                    data = request.POST
-                    print(request.POST)
-                    ce_router.objects.filter(port_id=select).update(name=data['name'],
-                                                                    hostname='sysname '+data['name'],
-                                                                    port_ip='int '+data['port_ip'],
-                                                                    ip_add='ip add '+data['ip_add'],
-                                                                    i_vlan_int='int '+data['i_vlan_int'],
-                                                                    i_vlan_ip='ip address '+data['i_vlan_ip'],
-                                                                    i_vlan_enc='dot1q termination vid '+data['i_vlan_enc'],
-                                                                    ospf_area='area '+data['ospf_area'],
-                                                                    ospf_network='network '+data['ospf_network'],
-                                                                    dhcp_int='int '+data['dhcp_int'],
-                                                                    dhcp_ipadd ='ip add '+data['dhcp_ipadd'],
-                                                                    dhcp_server_dnslist ='dhcp server dns-list '+data['dhcp_server_dnslist'],
-                                                                    dhcp_server_excluded='dhcp server excluded-ip-address '+data['dhcp_server_excluded'])
-                    update = select.id
-                    devices.objects.filter(id=update).update(preconf=data['name'], new_device_mac=data['mac'], stats='Booked')
-                    messages.success(request, f'Successfully update PreConfiguration!')
-                    return redirect('/')
-            else:
-                form_ce = ce_router_form()
-            
-            context = {
-                'form_ce': form_ce
-            }
-            return render(request, 'ansibleweb/huawei/ce_router_preconfig.html', context)
-    elif cek == 'ce' and tipe == 'switch':
-        if state == 'empty':
-            if request.method == 'POST':
-                form_ce = ce_switch_form(request.POST)
-                if form_ce.is_valid():
-                    data = request.POST
-                    print(request.POST)
-                    coba = ce_switch(name=data['name'],
-                                    hostname='sysname '+data['name'],
-                                    vlan = 'vlan batch '+data['vlan'],
-                                    port_ip='int '+data['port_ip'],
-                                    port_vlan='port default vlan '+data['port_vlan'],
-                                    port_cmd1='port link-type '+data['port_cmd1'],
-                                    port_id=select)
-                    coba.save()
-                    idd = select.id
-                    devices.objects.filter(id=idd).update(preconf=data['name'] ,new_device_mac=data['mac'] ,stats='Booked')
-                    messages.success(request, f'Successfully create PreConfiguration!')
-                    return redirect('/')
-            else:
-                form_ce = ce_switch_form()
-                messages.warning(request, f'tidak valid')
-
-            context = {
-                'form_ce': form_ce
-            }
-            return render(request, 'ansibleweb/huawei/ce_switch_preconfig.html', context)
-        else:
-            if request.method == 'POST':
-                form_ce = ce_switch_form(request.POST)
-                if form_ce.is_valid():
-                    data = request.POST
-                    print(request.POST)
-                    ce_switch.objects.filter(port_id=select).update(name=data['name'],
-                                                                    hostname='sysname '+data['name'],
-                                                                    vlan = 'vlan batch '+data['vlan'],
-                                                                    port_ip='int '+data['port_ip'],
-                                                                    port_vlan='port default vlan '+data['port_vlan'],
-                                                                    port_cmd1='port link-type '+data['port_cmd1'])
-                    update = select.id
-                    devices.objects.filter(id=update).update(preconf=data['name'], new_device_mac=data['mac'], stats='Booked')
-                    messages.success(request, f'Successfully update PreConfiguration!')
-                    return redirect('/')
-            else:
-                form_ce = ce_switch_form()
-            
-            context = {
-                'form_ce': form_ce
-            }
-            return render(request, 'ansibleweb/huawei/ce_switch_preconfig.html', context)
-    elif cek == 'routeros' and tipe == 'router':
-        if state == 'empty':
-            if request.method == 'POST':
-                form_routeros = routeros_router_form(request.POST)
-                if form_routeros.is_valid():
-                    data = request.POST
-                    print(request.POST)
-                    coba = routeros_router(name=data['name'],
-                                        hostname='/system identity set name='+data['name'],
-                                        port_cmd='/ip address add address='+data['port_cmd']+' interface='+data['port_ip'],
-                                        opsf='/routing ospf network add network='+data['ospf_network']+' area='+data['ospf_area'],
-                                        inter_vlan='/interface vlan add name='+data['vlan_name']+' vlan-id='+data['vlan_id']+' interface='+data['vlan_int'],
-                                        ip_add_vlan='/ip address add address='+data['ip_add_vlan']+' interface='+data['interface_vlan'],
-                                        port_id=select)
-                    coba.save()
-                    idd = select.id
-                    devices.objects.filter(id=idd).update(preconf=data['name'] ,new_device_mac=data['mac'] ,stats='Booked')
-                    messages.success(request, f'Successfully create PreConfiguration!')
-                    return redirect('/')
-            else:
-                form_routeros = routeros_router_form()
-            context= {
-                'form_routeros': form_routeros
-            }
-            return render(request, 'ansibleweb/mikrotik/routeros_router_form.html', context)
-        else:
-            if request.method == 'POST':
-                form_routeros = routeros_router_form(request.POST)
-                if form_routeros.is_valid():
-                    data = request.POST
-                    print(request.POST)
-                    routeros_router.objects.filter(port_id=select).update(name=data['name'],
-                                        hostname='/system identity set name='+data['name'],
-                                        port_cmd='/ip address add address='+data['port_cmd']+' interface='+data['port_ip'],
-                                        opsf='/routing ospf network add network='+data['ospf_network']+' area='+data['ospf_area'],
-                                        inter_vlan='/interface vlan add name='+data['vlan_name']+' vlan-id='+data['vlan_id']+' interface='+data['vlan_int'],
-                                        ip_add_vlan='/ip address add address='+data['ip_add_vlan']+' interface='+data['interface_vlan'])
-                    update = select.id
-                    devices.objects.filter(id=update).update(preconf=data['name'], new_device_mac=data['mac'] ,stats='Booked')
-                    messages.success(request, f'Successfully update PreConfiguration!')
-                    return redirect('/')
-            else:
-                form_routeros = routeros_router_form()
-            context={
-                'form_routeros': form_routeros
-            }
-            return render(request, 'ansibleweb/mikrotik/routeros_router_form.html', context)
-    else:
-        messages.warning(request, f'Belum menambahkan Tipe Device Baru')
-        return redirect('/')
     
 
 #        form = autoios(request.POST, instance=device)
@@ -575,6 +402,14 @@ def log_info(request):
         'logs': logs
     }
     return render(request, 'ansibleweb/home.html', context)
+
+
+def macdata(datamac):
+    get1 = macdata.replace("-","")
+    get2 = get1.replace(".","")
+    get3 = get2.replace(":","")
+    get4 = get3.lower()
+    return(get4)
 
 
 

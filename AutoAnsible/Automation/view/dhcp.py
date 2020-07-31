@@ -143,7 +143,7 @@ def dhcp_all(request):
                             dict(ansible_command_timeout=120)
                         ],
                         tasks=[
-                            dict(action=dict(module='ios_config', lines=['network +'+network+' '+mask, 'default-router '+gateway], parents='ip dhcp pool '+pool)),
+                            dict(action=dict(module='ios_config', lines=['network '+network+' '+mask, 'default-router '+gateway], parents='ip dhcp pool '+pool)),
                             dict(action=dict(module='ios_config', lines=['ip dhcp excluded-address '+excluded])),
                             dict(action=dict(module='ios_config', lines=['ip add '+gateway+' '+mask, 'no sh'], parents='int '+interface))
                         ]
@@ -153,6 +153,7 @@ def dhcp_all(request):
                     kond = result.stats
                     kondisi = kond['hosts'][0]['status']
                     hos = kond['hosts'][0]['host']
+                    print(result.results)
                     if kondisi == 'ok':
                         dataport = result.results                
                         command = dataport['success'][0]['tasks'][0]['result']['commands'][0]
@@ -168,7 +169,6 @@ def dhcp_all(request):
                         logs.save()
                         gagal = "Device   :"+hos+"    Output:"+err
                         output.append(gagal)
-                    messages.success(request, output)
                 context = {
                     'form_host': form_host,
                     'formset': formset,

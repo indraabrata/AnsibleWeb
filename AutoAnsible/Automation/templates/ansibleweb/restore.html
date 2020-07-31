@@ -13,7 +13,7 @@
                 </div>
               </div>
           <div class="row d-flex align-items-md-stretch">
-            <div class="col-lg-6">
+            <div class="col-lg-5">
            <div class="card">
           <form method="POST" class="text-left">
                {% csrf_token %}
@@ -24,7 +24,7 @@
                     <div class="col-2">
                         <label>Select Device</label>
                     </div>
-                    <div class="col-6">
+                    <div class="col-8">
                         <div class="input-group">
                             {% render_field form.hosts class="form-control form-fix-size" required='required' %}
                         <span class="mr-2"></span>
@@ -41,19 +41,23 @@
          </form>
         </div>
           </div>
-            <div class="col-lg-6">
-                <div class="card">
-                    <div class="card-header d-flex align-items-center">
-                        <h4>Result Task</h4>
-                    </div>
-                    <div class="card-body">
+          <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <table class="table">
+                        <tr>
+                            <th>Result Task</th>
+                        </tr>
                         {% for hasil in output %}
-                            {{hasil}}
-                        {% endfor %}
-                    </div>
+                             <tr>
+                                 <td>{{ hasil }}</td>            
+                             </tr> 
+                         {% endfor %}
+                    </table>
                 </div>
-                
             </div>
+            
+        </div>
     </div>
     </div>
   </section>

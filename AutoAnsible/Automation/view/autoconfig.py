@@ -304,18 +304,12 @@ def autoconf(device, akun):
                 if jumlah > 0:
                     ulang = False
                     for z in range(0, jumlah):
-                        findmac = match[z]#dlm bentuk aabb.ccdd.eeff
-                        print(findmac)
-                        get1 = findmac.replace("-","")
-                        get2 = get1.replace(".","")
-                        get3 = get2.replace(":","")
-                        get4 = get3.upper()#dlm bentuk AABBCCDDEEFF
-                        get5 = get4[:6]#dlm bentuk AABBCC
-                        get6 = get5[:2]+":"+get5[2:4]+":"+get5[4:6]#dlm bentuk AA:BB:CC
-                        findos = mac_os.objects.filter(oui=get6).values_list('vendor')
+                        findmac = match[z]
+                        get_vendor(findmac)# function Mengubah value match untuk mendapatkan vendor
+                        findos = mac_os.objects.filter(oui=get_vendor).values_list('vendor')
                         t_os = findos[0][0]#dapat vendor
                         print(t_os)
-                        mac_matching = get3.lower()
+                        mac_matching = lower_mac(findmac)
                         print(device)
                         cekking = devices.objects.filter(device_id=device, stats='Booked', new_device_mac=mac_matching)
                         matching = len(cekking)
@@ -421,14 +415,13 @@ def autoconf(device, akun):
                         else:
                             logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages='Port Tidak Sesuai')
         if os == 'ios' and tipe == 'router':
-            arp.objects.filter(device_id=device).delete()
-            listip = devices.objects.filter(device_id=device, stats='Booked').values_list('ipadd')
-            total = len(listip)
-            for x in range(0, total):
+            arp.objects.filter(device_id=device).delete() # menghapus arp table
+            listip = devices.objects.filter(device_id=device, stats='Booked').values_list('ipadd') # mendapatkan list Ip address yang dipesan portnya
+            total = len(listip) #total list ip port yang dibooked
+            for x in range(0, total): #melakukan perulangan pada tiap ip untuk diubah menjadi ip broadcast dan menjalankan ping broadcast
                 ping_ip = listip[x][0]+str(56)
                 dot = ping_ip.rfind('.')
                 getchar = ping_ip[dot:]
-                print(getchar)
                 change = ping_ip.replace(getchar, ".255")
                 print(change)
                 my_play = dict(
@@ -444,7 +437,7 @@ def autoconf(device, akun):
                         dict(action=dict(module='ios_command', commands='ping '+change))
                     ]
                 )
-                result1 = execute(my_play)
+                result1 = execute(my_play)#eksekusi ping broadcast
             my_play2 = dict(
                 name="show arp",
                 hosts=hos.host,
@@ -458,7 +451,7 @@ def autoconf(device, akun):
                     dict(action=dict(module='ios_command', commands='sh ip arp'))
                     ]
                 )
-            result = execute(my_play2)
+            result = execute(my_play2)#setelah ping broadcast, arp table akan terupdate dengan perangkat baru
             condition = result.stats
             mac_booked = []
             mac_arp = []
@@ -500,27 +493,16 @@ def autoconf(device, akun):
                     ulang = False
                     for z in range(0, jumlah):
                         findmac = match[z]#dlm bentuk aabb.ccdd.eeff
-                        get1 = findmac.replace("-","")
-                        get2 = get1.replace(".","")
-                        get3 = get2.replace(":","")
-                        get4 = get3.upper()#dlm bentuk AABBCCDDEEFF
-                        get5 = get4[:6]#dlm bentuk AABBCC
-                        get6 = get5[:2]+":"+get5[2:4]+":"+get5[4:6]#dlm bentuk AA:BB:CC
-                        findos = mac_os.objects.filter(oui=get6).values_list('vendor')
+                        get_vendor(findmac)
+                        findos = mac_os.objects.filter(oui=get_vendor).values_list('vendor')
                         t_os = findos[0][0]#dapat vendor
-                        ios_mac = get4.lower()#dlm bentuk aabbccddeeff
-                        ios_macs = ios_mac[:4]+"."+ios_mac[4:8]+"."+ios_mac[8:]#bentuk aabb.ccdd.eeff untuk ios
                         getportarp = arp.objects.filter(device_id=device, mac=findmac).values_list('port')
                         portarpp = getportarp[0][0]#'GigabitEthernet0/0/1'
-                        cekking = devices.objects.filter(device_id=device, stats='Booked', port=portarpp).values_list('new_device_mac')
+                        cekking = devices.objects.filter(device_id=device, stats='Booked', port=portarpp).values_list('new_device_mac')#cek perangkat baru terpasang sesuai port atau tidak
                         convert_mac = cekking[0][0]
-                        c_1 = convert_mac.replace("-","")
-                        c_2 = c_1.replace(".","")
-                        c_3 = c_2.replace(":","")
-                        c_4 = c_3.lower()
-                        c_5 = c_4[:4]+"."+c_4[4:8]+"."+c_4[8:]#dlm bentuk ios aabb.ccdd.eeff
+                        c_5 = convert_mac[:4]+"."+convert_mac[4:8]+"."+convert_mac[8:]#dlm bentuk ios aabb.ccdd.eeff
                         print(c_5)
-                        matching = c_5 in findmac
+                        matching = c_5 in findmac # matching mac Arp dengan mac booking 
                         de_type = devices.objects.filter(device_id=device, stats='Booked', port=portarpp).values_list('new_device_type')
                         dtype = de_type[0][0]
                         add_ip = arp.objects.filter(mac=findmac).values_list('ipadd')
@@ -702,17 +684,12 @@ def autoconf(device, akun):
                     ulang = False
                     for z in range(0, jumlah):
                         findmac = match[z]
-                        get1 = findmac.replace("-","")
-                        get2 = get1.replace(".","")
-                        get3 = get2.replace(":","")
-                        get4 = get3.upper()
-                        get5 = get4[:6]
-                        get6 = get5[:2]+":"+get5[2:4]+":"+get5[4:6]
-                        findos = mac_os.objects.filter(oui=get6).values_list('vendor')
+                        get_vendor(findmac)
+                        findos = mac_os.objects.filter(oui=get_vendor).values_list('vendor')
                         t_os = findos[0][0]
                         print(t_os)
                         print(findmac)
-                        mac_matching = get3.lower()
+                        mac_matching = lower_mac(findmac)
                         print(device)
                         cekking = devices.objects.filter(device_id=device, stats='Booked', new_device_mac=mac_matching)
                         matching = len(cekking)
@@ -738,7 +715,7 @@ def autoconf(device, akun):
                             grup = AnsibleNetworkGroup.objects.get(name='Cisco')
                             ciscorouter(cons, de_type, grup, add_ip_ok, findmac, akun, hos)
 
-                        elif Huawei_os == True and dtype == 'router' and matching == True:
+                        elif Huawei_os == True and dtype == 'router' and matching > 0:
                             grup = AnsibleNetworkGroup.objects.get(name='Huawei')
                             print("huawei router")
                             savehost = AnsibleNetworkHost(host=cons,
@@ -778,15 +755,15 @@ def autoconf(device, akun):
                                 err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
                                 logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
                                 print(f'{err}')
-                        elif Huawei_os == True and dtype == 'switch' and matching == True:
+                        elif Huawei_os == True and dtype == 'switch' and matching > 0:
                             grup = AnsibleNetworkGroup.objects.get(name='Huawei')
                             print('huawei switch')
                             huaweiswitch(cons, add_ip_ok, de_type, grup, mac_matching, akun, hos)
-                        elif Cisco_os == True and dtype == 'switch' and matching == True:
+                        elif Cisco_os == True and dtype == 'switch' and matching > 0:
                             grup = AnsibleNetworkGroup.objects.get(name='Cisco')
                             ciscoswitch(cons, de_type, grup, add_ip_ok, findmac, akun, hos)
 
-                        elif Mikrotik_os == True and dtype == 'router' and matching == True:
+                        elif Mikrotik_os == True and dtype == 'router' and matching > 0:
                             grup = AnsibleNetworkGroup.objects.get(name='Mikrotik')
                             print('mikrotik router')
                             savehost = AnsibleNetworkHost(host=cons,
@@ -825,8 +802,30 @@ def autoconf(device, akun):
                                 err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
                                 logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
                                 print(f'{err}')
-        elif os == 'routeros':
+        elif os == 'routeros' and de_type == 'router':
             arp.objects.filter(device_id=device).delete()
+            listip = devices.objects.filter(device_id=device, stats='Booked').values_list('ipadd')
+            total = len(listip)
+            for x in range(0, total):
+                ping_ip = listip[x][0]+str(56)
+                dot = ping_ip.rfind('.')
+                getchar = ping_ip[dot:]
+                change = ping_ip.replace(getchar, ".255")
+                print(change)
+                my_play = dict(
+                    name="Ping broadcast",
+                    hosts=hos.host,
+                    become='yes',
+                    become_method='enable',
+                    gather_facts='no',
+                    vars=[
+                            dict(ansible_command_timeout=120)
+                    ],
+                    tasks=[
+                        dict(action=dict(module='routeros_command', commands='ping '+change))
+                    ]
+                )
+                result1 = execute(my_play)#eksekusi ping broadcast
             my_play = dict(name="show arp",
                             host=hos.host,
                             become='yes',
@@ -885,13 +884,8 @@ def autoconf(device, akun):
                     for z in range(0, jumlah):
                         findmac = match[z]
                         print(findmac)
-                        get1 = findmac.replace("-","")
-                        get2 = get1.replace(".","")
-                        get3 = get2.replace(":","")
-                        get4 = get3.upper()
-                        get5 = get4[:6]
-                        get6 = get5[:2]+":"+get5[2:4]+":"+get5[4:6]
-                        findos = mac_os.objects.filter(oui=get6).values_list('vendor')
+                        get_vendor(findmac)
+                        findos = mac_os.objects.filter(oui=get_vendor).values_list('vendor')
                         t_os = findos[0][0]
                         getportarp = arp.objects.filter(device_id=device, mac=findmac).values_list('port')
                         portarpp = getportarp[0][0]
@@ -1191,6 +1185,18 @@ def mikrotikrouter():
         logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='Failed', messages=err)
 
 
+def get_vendor(findmac):
+    get1 = findmac.replace("-","")
+    get2 = get1.replace(".","")
+    get3 = get2.replace(":","")
+    get4 = get3.upper()#dlm bentuk AABBCCDDEEFF
+    get5 = get4[:6]#dlm bentuk AABBCC
+    get6 = get5[:2]+":"+get5[2:4]+":"+get5[4:6]#dlm bentuk AA:BB:CC
+    return(get6)
 
-
-
+def lower_mac(findmac):
+    get1 = findmac.replace("-","")
+    get2 = get1.replace(".","")
+    get3 = get2.replace(":","")
+    get4 = get3.lower()
+    return(get4)
