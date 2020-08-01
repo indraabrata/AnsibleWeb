@@ -130,7 +130,7 @@ def ipstatic(request):
                             dict(ansible_command_timeout=120)
                         ],
                         tasks=[
-                            dict(action=dict(module='routeros_command', commands='/ip address add address='+ip_add+'/'+netmask+'interface='+interface))
+                            dict(action=dict(module='routeros_command', commands='/ip address add address='+ip_add+'/'+netmask+' interface='+interface))
                         ]
                     )
                     print(my_play)
@@ -140,8 +140,7 @@ def ipstatic(request):
                     hos = kond['hosts'][0]['host']
                     if kondisi == 'ok':
                         dataport = result.results                
-                        command = dataport['success'][0]['tasks'][0]['result']['commands'][0]
-                        berhasil = dataport['success'][0]['tasks'][0]['result']['changed']
+                        command = dataport['success'][0]['tasks'][0]['result']['invocation']['module_args']['commands'][0]
                         logs = log(account=akun, targetss=hos, action='Configure IP Static '+hos, status='Success', time=datetime.now(), messages='No Error')
                         logs.save()
                         jadi = "Device   :"+hos+"    Commands:"+command+"    Changed: True"

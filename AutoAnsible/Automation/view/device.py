@@ -120,6 +120,7 @@ def addportdevice(request):
                     )
                 result = execute(my_play)
                 condition = result.stats
+                print(result.results)
                 con = condition['hosts'][0]['status']
                 if con == 'ok':
                     output = result.results

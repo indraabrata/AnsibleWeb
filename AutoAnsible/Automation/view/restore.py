@@ -52,7 +52,6 @@ def restorecisco(request):
                     if kondisi == 'ok':
                         dataport = result.results                
                         command = dataport['success'][0]['tasks'][0]['result']['commands'][0]
-                        berhasil = dataport['success'][0]['tasks'][0]['result']['changed']
                         logs = log(account=akun, targetss=hos, action='Restore Config '+hos, status='Success', time=datetime.now(), messages='No Error')
                         logs.save()
                         jadi = "Device   :"+hos+"    Commands:"+command+"    Changed: True"
@@ -194,21 +193,21 @@ def restorecisco(request):
                         ],
                         tasks=[
                             dict(net_put=dict(src='./backup/{{inventory_hostname}}.backup', protocol='scp', dest='./{{inventory_hostname}}.backup')),
-                            dict(action=dict(module='cli_command', command=':execute {/system backup load name=mtk2 password=mikrotik;}', prompt='Restore and reboot', answer='y'))                    
+                            dict(action=dict(module='cli_command', command='/system backup load name={{ inventory_hostname }} password={{ ansible_password }}', prompt='Restore and reboot', answer='y'))                    
                         ]
                     )
                     result = execute(my_play)
                     kond = result.stats
+                    print(result.results)
                     kondisi = kond['hosts'][0]['status']
                     hos = kond['hosts'][0]['host']
                     if kondisi == 'ok':
                         dataport = result.results                
-                        command = dataport['success'][0]['tasks'][0]['result']['commands'][0]
-                        berhasil = dataport['success'][0]['tasks'][0]['result']['changed']
+                        #command = dataport['success'][0]['tasks'][0]['result']['invocation']['module_args']['commands'][0]
                         logs = log(account=akun, targetss=hos, action='Restore Config '+hos, status='Success', time=datetime.now(), messages='No Error')
                         logs.save()
-                        jadi = "Device   :"+hos+"    Commands:"+command+"    Changed: True"
-                        output.append(jadi)      
+                        #jadi = "Device   :"+hos+"    Commands:"+command+"    Changed: True"
+                        #output.append(jadi)      
                     else:
                         dataport = result.results
                         err = dataport['failed'][0]['tasks'][0]['result']['msg']

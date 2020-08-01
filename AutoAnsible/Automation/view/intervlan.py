@@ -55,7 +55,6 @@ def ivlan_all(request):
                     if kondisi == 'ok':
                         dataport = result.results                
                         command = dataport['success'][0]['tasks'][0]['result']['commands'][0]
-                        berhasil = dataport['success'][0]['tasks'][0]['result']['changed']
                         logs = log(account=akun, targetss=hos, action='Configure InterVLAN '+hos, status='Success', time=datetime.now(), messages='No Error')
                         logs.save()
                         jadi = "Device   :"+hos+"    Commands:"+command+"    Changed: True"
@@ -100,7 +99,6 @@ def ivlan_all(request):
                     if kondisi == 'ok':
                         dataport = result.results                
                         command = dataport['success'][0]['tasks'][0]['result']['commands'][0]
-                        berhasil = dataport['success'][0]['tasks'][0]['result']['changed']
                         logs = log(account=akun, targetss=hos, action='Configure InterVLAN '+hos, status='Success', time=datetime.now(), messages='No Error')
                         logs.save()
                         jadi = "Device   :"+hos+"    Commands:"+command+"    Changed: True"
@@ -145,8 +143,7 @@ def ivlan_all(request):
                     hos = kond['hosts'][0]['host']
                     if kondisi == 'ok':
                         dataport = result.results                
-                        command = dataport['success'][0]['tasks'][0]['result']['commands'][0]
-                        berhasil = dataport['success'][0]['tasks'][0]['result']['changed']
+                        command = dataport['success'][0]['tasks'][0]['result']['invocation']['module_args']['commands'][0]
                         logs = log(account=akun, targetss=hos, action='Configure InterVLAN '+hos, status='Success', time=datetime.now(), messages='No Error')
                         logs.save()
                         jadi = "Device   :"+hos+"    Commands:"+command+"    Changed: True"
