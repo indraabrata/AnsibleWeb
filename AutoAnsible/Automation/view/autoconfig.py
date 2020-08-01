@@ -28,165 +28,58 @@ def arpconfig(request):
             jumlah = arp.objects.all().filter(device_id=host)
             cannot = len(jumlah)
             if cannot == 0 and os == 'ios':
-                my_play = dict(
-                    name="show arp",
-                    hosts=host.host,
-                    become='yes',
-                    become_method='enable',
-                    gather_facts='no',
-                    vars=[
-                        dict(ansible_command_timeout=120)
-                    ],
-                    tasks=[
-                        dict(action=dict(module='ios_command', commands='sh ip arp'))
-                        ]
-                    )
-                result = execute(my_play)
-                condition = result.stats
-                con = condition['hosts'][0]['status']
-                if con == 'ok':
-                    output = result.results
-                    dataport = output['success'][0]['tasks'][0]['result']['stdout_lines'][0][1:]
-                    maks = len(dataport)
-                    for x in range(0, maks):
-                        ip = dataport[x][10:25].replace(" ","")
-                        mac = dataport[x][38:52].replace(" ","")
-                        portt = dataport[x][61:].replace(" ","")
-                        coba = arp(ipadd=ip,
-                                mac=mac,
-                                port=portt,
-                                device_id=host)
-                        coba.save()
-                    info = arp.objects.all().filter(device_id=host)
-                    context = {
-                        'form': form,
-                        'info': info
-                    }
-                    return render(request, 'ansibleweb/autoconfig.html', context)
-                else:
-                    messages.warning(request, f'Check Connection to Remote Host!')
-                    return redirect('arp')
+                arpcisco(host, request)
+                info = arp.objects.all().filter(device_id=host)
+                context = {
+                    'form': form,
+                    'info': info
+                }
+                return render(request, 'ansibleweb/autoconfig.html', context)
             elif cannot == 0 and os == 'ce':
-                my_play = dict(
-                    name="show arp",
-                    hosts=host.host,
-                    become='yes',
-                    become_method='enable',
-                    gather_facts='no',
-                    vars=[
-                        dict(ansible_command_timeout=120)
-                    ],
-                    tasks=[
-                        dict(action=dict(module='ce_command', commands='display arp'))
-                        ]
-                    )
-                result = execute(my_play)
-                condition = result.stats
-                con = condition['hosts'][0]['status']
-                if con == 'ok':
-                    output = result.results
-                    dataport = output['success'][0]['tasks'][0]['result']['stdout_lines'][0][3:]
-                    maks = len(dataport)
-                    for x in range(0, maks):
-                        ip = dataport[x][:15].replace(" ","")
-                        mac = dataport[x][16:31].replace(" ","")
-                        portt = dataport[x][47:60].replace(" ","")
-                        coba = arp(ipadd=ip,
-                                    mac=mac,
-                                    port=portt,
-                                    device_id=host)
-                        coba.save()
-                    info = arp.objects.all().filter(device_id=host)
-                    context = {
-                        'form': form,
-                        'info': info
-                    }
-                    return render(request, 'ansibleweb/autoconfig.html', context)
-                else:
-                    messages.warning(request, f'Check Connection to Remote Host!')
-                    return redirect('arp')
+                arphuawei(host, request)
+                info = arp.objects.all().filter(device_id=host)
+                context = {
+                    'form': form,
+                    'info': info
+                }
+                return render(request, 'ansibleweb/autoconfig.html', context)
+            elif cannot == 0 and os == 'routeros':
+                arpmikrotik(host, request)
+                info = arp.objects.all().filter(device_id=host)
+                context = {
+                    'form': form,
+                    'info': info
+                }
+                return render(request, 'ansibleweb/autoconfig.html', context)
             else:
                 if cannot > 0 and os == 'ce':
                     print("coba")
                     arp.objects.filter(device_id=data['hosts']).delete()
-                    my_play = dict(
-                        name="show arp",
-                        hosts=host.host,
-                        become='yes',
-                        become_method='enable',
-                        gather_facts='no',
-                        vars=[
-                            dict(ansible_command_timeout=120)
-                        ],
-                        tasks=[
-                            dict(action=dict(module='ce_command', commands='display arp'))
-                            ]
-                        )
-                    result = execute(my_play)
-                    condition = result.stats
-                    con = condition['hosts'][0]['status']
-                    if con == 'ok':
-                        output = result.results
-                        dataport = output['success'][0]['tasks'][0]['result']['stdout_lines'][0][3:]
-                        maks = len(dataport)
-                        for x in range(0, maks):
-                            ip = dataport[x][:15].replace(" ","")
-                            mac = dataport[x][16:31].replace(" ","")
-                            portt = dataport[x][47:60].replace(" ","")
-                            coba = arp(ipadd=ip,
-                                    mac=mac,
-                                    port=portt,
-                                    device_id=host)
-                            coba.save()
-                        info = arp.objects.all().filter(device_id=host)
-                        context = {
-                            'form': form,
-                            'info': info
-                        }
-                        return render(request, 'ansibleweb/autoconfig.html', context)
-                    else:
-                        messages.warning(request, f'Check Connection to Remote Host!')
-                        return redirect('arp')
+                    arphuawei(host, request)
+                    info = arp.objects.all().filter(device_id=host)
+                    context = {
+                        'form': form,
+                        'info': info
+                    }
+                    return render(request, 'ansibleweb/autoconfig.html', context)
                 elif cannot > 0 and os == 'ios':
                     arp.objects.filter(device_id=data['hosts']).delete()
-                    my_play = dict(
-                        name="show arp",
-                        hosts=host.host,
-                        become='yes',
-                        become_method='enable',
-                        gather_facts='no',
-                        vars=[
-                            dict(ansible_command_timeout=120)
-                        ],
-                        tasks=[
-                            dict(action=dict(module='ios_command', commands='sh ip arp'))
-                            ]
-                        )
-                    result = execute(my_play)
-                    condition = result.stats
-                    con = condition['hosts'][0]['status']
-                    if con == 'ok':
-                        output = result.results
-                        dataport = output['success'][0]['tasks'][0]['result']['stdout_lines'][0][1:]
-                        maks = len(dataport)
-                        for x in range(0, maks):
-                            ip = dataport[x][10:25].replace(" ","")
-                            mac = dataport[x][38:52].replace(" ","")
-                            portt = dataport[x][61:].replace(" ","")
-                            coba = arp(ipadd=ip,
-                                    mac=mac,
-                                    port=portt,
-                                    device_id=host)
-                            coba.save()
-                        info = arp.objects.all().filter(device_id=host)
-                        context = {
-                            'form': form,
-                            'info': info
-                        }
-                        return render(request, 'ansibleweb/autoconfig.html', context)
-                    else:
-                        messages.warning(request, f'Check Connection to Remote Host!')
-                        return redirect('arp')
+                    arpcisco(host, request)
+                    info = arp.objects.all().filter(device_id=host)
+                    context = {
+                        'form': form,
+                        'info': info
+                    }
+                    return render(request, 'ansibleweb/autoconfig.html', context)
+                elif cannot > 0 and os == 'routeros':
+                    arp.objects.filter(device_id=data['hosts']).delete()
+                    arpmikrotik(host, request)
+                    info = arp.objects.all().filter(device_id=host)
+                    context = {
+                        'form': form,
+                        'info': info
+                    }
+                    return render(request, 'ansibleweb/autoconfig.html', context)
     elif request.method == 'GET' and 'btnform2' in request.GET:
         form = autoconfig(request.GET, request.user)
         if form.is_valid():
@@ -213,8 +106,6 @@ def arpconfig(request):
         'form': form
     }
     return render(request, 'ansibleweb/autoconfig.html', context)
-
-
 
 def autoconf(device, akun):
     print("Starting AutoConfiguration")
@@ -328,90 +219,15 @@ def autoconf(device, akun):
                         print(Cisco_os)
                         print(Mikrotik_os)
                         if Cisco_os == True and dtype == 'router' and matching > 0:
-                            grup = AnsibleNetworkGroup.objects.get(name='Cisco')
-                            ciscorouter(cons, de_type, grup, add_ip_ok, mac_matching, akun, hos)
-                            
+                            ciscorouter(cons, de_type, add_ip_ok, mac_matching, akun, hos)
                         elif Cisco_os == True and dtype == 'switch' and matching > 0:
-                            grup = AnsibleNetworkGroup.objects.get(name='Cisco')
-                            ciscoswitch(cons, de_type, grup, add_ip_ok, mac_matching, akun, hos)
+                            ciscoswitch(cons, de_type, add_ip_ok, mac_matching, akun, hos)
                         elif Huawei_os == True and dtype == 'router' and matching > 0:
-                            grup = AnsibleNetworkGroup.objects.get(name='Huawei')
-                            savehost = AnsibleNetworkHost(host=cons,
-                                                ansible_ssh_host=add_ip_ok,
-                                                ansible_user='admin',
-                                                ansible_ssh_pass='54541691',
-                                                ansible_become_pass='54541691',
-                                                device_type=de_type,
-                                                group=grup)
-                            savehost.save()
-                            conf = ce_router.objects.get(name=cons)
-                            my_play = dict(
-                                    name="hostname",
-                                    hosts=cons,
-                                    become='yes',
-                                    become_method='enable',
-                                    gather_facts='no',
-                                    vars=[
-                                        dict(ansible_command_timeout=120)
-                                    ],
-                                    tasks=[
-                                        dict(action=dict(module='ce_config', commands=conf.hostname)),
-                                        dict(action=dict(module='ce_config', lines=[conf.ospf, conf.ospf_area, conf.ospf_network]))
-                                        ]
-                                    )
-                            result = execute(my_play)
-                            kondisi = result.stats
-                            kond = kondisi['hosts'][0]['status']
-                            if kond == 'ok':
-                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
-                            else:
-                                fail = result.results
-                                err = fail['failed'][0]['tasks'][0]['result']['msg']
-                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
-                                print(f'{err}')
+                            huaweirouter(cons, add_ip_ok, de_type, mac_matching, akun, hos)
                         elif Huawei_os == True and dtype == 'switch' and matching > 0:
-                            grup = AnsibleNetworkGroup.objects.get(name='Huawei')
-                            huaweiswitch(cons, add_ip_ok, de_type, grup, mac_matching, akun, host)
-
+                            huaweiswitch(cons, add_ip_ok, de_type, mac_matching, akun, host)
                         elif Mikrotik_os == True and dtype == 'router' and matching > 0:
-                            grup = AnsibleNetworkGroup.objects.get(name='Mikrotik')
-                            savehost = AnsibleNetworkHost(host=cons,
-                                                    ansible_ssh_host=add_ip_ok,
-                                                    ansible_user='mikrotik',
-                                                    ansible_ssh_pass='54541691',
-                                                    ansible_become_pass='54541691',
-                                                    device_type=de_type,
-                                                    group=grup)
-                            savehost.save()
-                            conf = routeros_router.objects.get(name=cons)
-                            my_play = dict(
-                                    name="hostname",
-                                    hosts=cons,
-                                    become='yes',
-                                    become_method='enable',
-                                    gather_facts='no',
-                                    vars=[
-                                        dict(ansible_command_timeout=120)
-                                    ],
-                                    tasks=[
-                                        dict(action=dict(module='routeros_command', commands=conf.hostname)),
-                                        dict(action=dict(module='routeros_command', commands=conf.ospf)),
-                                        dict(action=dict(module='routeros_command', commands=conf.inter_vlan)),
-                                        dict(action=dict(module='routeros_coomand', commands=conf.ip_add_vlan))
-                                        ]
-                                )
-                            result = execute(my_play)
-                            kondisi = result.stats
-                            kond = kondisi['hosts'][0]['status']
-                            if kond == 'ok':
-                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
-                            else:
-                                fail = result.results
-                                err = fail['failed'][0]['tasks'][0]['result']['msg']
-                                logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
-                                print(f'{err}')
+                            mikrotikrouter(cons, de_type, add_ip_ok, mac_matching, akun, hos)
                         else:
                             logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages='Port Tidak Sesuai')
         if os == 'ios' and tipe == 'router':
@@ -518,89 +334,131 @@ def autoconf(device, akun):
                         print(Mikrotik_os)
                         if Cisco_os == True and dtype == 'router' and matching == True:
                             ciscorouter(cons, de_type, add_ip_ok, findmac, akun, hos)
-                            
                         elif Cisco_os == True and dtype == 'switch' and matching == True:
-                            grup = AnsibleNetworkGroup.objects.get(name='Cisco')
-                            ciscoswitch(cons, de_type, grup, add_ip_ok, findmac, akun, hos)
-
+                            ciscoswitch(cons, de_type, add_ip_ok, findmac, akun, hos)
                         elif Huawei_os == True and dtype == 'router' and matching == True:
-                            grup = AnsibleNetworkGroup.objects.get(name='Huawei')
-                            savehost = AnsibleNetworkHost(host=cons,
-                                                ansible_ssh_host=add_ip,
-                                                ansible_user='admin',
-                                                ansible_ssh_pass='huawei12345',
-                                                ansible_become_pass='huawei12345',
-                                                device_type=de_type,
-                                                group=grup)
-                            savehost.save()
-                            conf = ce_router.objects.get(name=cons)
-                            my_play = dict(
-                                    name="hostname",
-                                    hosts=cons,
-                                    become='yes',
-                                    become_method='enable',
-                                    gather_facts='no',
-                                    vars=[
-                                        dict(ansible_command_timeout=120)
-                                    ],
-                                    tasks=[
-                                        dict(action=dict(module='ce_config', commands=conf.hostname)),
-                                        dict(action=dict(module='ce_config', lines=[conf.ospf, conf.ospf_area, conf.ospf_network]))
-                                        ]
-                                    )
-                            result = execute(my_play)
-                            kondisi = result.stats
-                            kond = kondisi['hosts'][0]['status']
-                            if kond == 'ok':
-                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
-                            else:
-                                fail = result.results
-                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
-                                print(f'{err}')
+                            huaweirouter(cons, add_ip_ok, de_type, mac_matching, akun, hos)
                         elif Huawei_os == True and dtype == 'switch' and matching == True:
-                            grup = AnsibleNetworkGroup.objects.get(name='Huawei')
-                            huaweiswitch(cons, add_ip_ok, de_type, grup, mac_matching, akun, hos)
-
+                            huaweiswitch(cons, add_ip_ok, de_type, mac_matching, akun, hos)
                         elif Mikrotik_os == True and dtype == 'router' and matching == True:
-                            grup = AnsibleNetworkGroup.objects.get(name='Mikrotik')
-                            savehost = AnsibleNetworkHost(host=cons,
-                                                    ansible_ssh_host=add_ip,
-                                                    ansible_user='mikrotik',
-                                                    ansible_ssh_pass='54541691',
-                                                    ansible_become_pass='54541691',
-                                                    device_type=de_type,
-                                                    group=grup)
-                            savehost.save()
-                            conf = routeros_router.objects.get(name=cons)
-                            my_play = dict(
-                                    name="hostname",
-                                    hosts=cons,
-                                    become='yes',
-                                    become_method='enable',
-                                    gather_facts='no',
-                                    vars=[
-                                        dict(ansible_command_timeout=120)
-                                    ],
-                                    tasks=[
-                                        dict(action=dict(module='routeros_command', commands=conf.hostname)),
-                                        dict(action=dict(module='routeros_command', commands=conf.ospf)),
-                                        dict(action=dict(module='routeros_command', commands=conf.inter_vlan)),
-                                        dict(action=dict(module='routeros_coomand', commands=conf.ip_add_vlan))
-                                        ]
-                                )
-                            result = execute(my_play)
-                            kondisi = result.stats
-                            kond = kondisi['hosts'][0]['status']
-                            if kond == 'ok':
-                                devices.objects.filter(new_device_mac=findmac).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
-                            else:
-                                fail = result.results
-                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
-                                print(f'{err}')
+                            mikrotikrouter(cons, de_type, add_ip_ok, mac_matching, akun, hos)
+                        else:
+                            logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages='Port Tidak Sesuai')
+        elif os == 'ce' and de_type == 'router':
+            arp.objects.filter(device_id=device).delete()
+            listip = devices.objects.filter(device_id=device, stats='Booked').values_list('ipadd') # mendapatkan list Ip address yang dipesan portnya
+            total = len(listip) #total list ip port yang dibooked
+            for x in range(0, total): #melakukan perulangan pada tiap ip untuk diubah menjadi ip broadcast dan menjalankan ping broadcast
+                ping_ip = listip[x][0]+str(56)
+                dot = ping_ip.rfind('.')
+                getchar = ping_ip[dot:]
+                change = ping_ip.replace(getchar, ".255")
+                print(change)
+                my_play = dict(
+                    name="Ping broadcast",
+                    hosts=hos.host,
+                    become='yes',
+                    become_method='enable',
+                    gather_facts='no',
+                    vars=[
+                        dict(ansible_command_timeout=120)
+                    ],
+                    tasks=[
+                        dict(action=dict(module='ce_config', commands='ping '+change))
+                    ]
+                )
+                result1 = execute(my_play)#eksekusi ping broadcast
+            my_play2 = dict(
+                name="show arp",
+                hosts=hos.host,
+                become='yes',
+                become_method='enable',
+                gather_facts='no',
+                vars=[
+                    dict(ansible_command_timeout=120)
+                ],
+                tasks=[
+                    dict(action=dict(module='ce_command', commands='display arp'))
+                    ]
+                )
+            result = execute(my_play2)
+            print(my_play)
+            condition = result.stats
+            print(condition)
+            mac_booked = []
+            mac_arp = []
+            con = condition['hosts'][0]['status']
+            print(con)
+            if con == 'ok':
+                output = result.results
+                dataport = output['success'][0]['tasks'][0]['result']['stdout_lines'][0][3:]
+                maks = len(dataport)
+                for x in range(0, maks):
+                    ip = dataport[x][:15].replace(" ","")
+                    mac = dataport[x][16:31].replace(" ","")
+                    portt = dataport[x][47:60].replace(" ","")
+                    coba = arp(ipadd=ip,
+                                mac=mac,
+                                port=portt,
+                                device_id=hos)
+                    coba.save()
+                bookeds = devices.objects.filter(device_id=device, stats='Booked').values_list('new_device_mac')
+                m_max = len(bookeds)
+                for z in range(0, m_max):
+                    del_1 = bookeds[z][0].replace("-","")
+                    del_2 = del_1.replace(".","")
+                    del_3 = del_2.replace(":","")
+                    del_4 = del_3.lower()
+                    mac_filter = del_4[:4]+"-"+del_4[4:8]+"-"+del_4[8:]
+                    mac_booked.append(mac_filter)
+                arps = arp.objects.filter(device_id=device).values_list('mac')
+                a_max = len(arps)
+                for y in range(0, a_max):
+                    del1 = arps[y][0]
+                    mac_arp.append(del1)
+                inter = set.intersection(set(mac_arp), set(mac_booked))
+                match = list(inter)
+                print(bookeds)
+                print(arps)
+                print(match)
+                jumlah = len(match)
+                if jumlah > 0:
+                    ulang = False
+                    for z in range(0, jumlah):
+                        findmac = match[z]
+                        get_vendor(findmac)
+                        findos = mac_os.objects.filter(oui=get_vendor).values_list('vendor')
+                        t_os = findos[0][0]
+                        getportarp = arp.objects.filter(device_id=device, mac=findmac).values_list('port')
+                        portarpp = getportarp[0][0]
+                        cekkamus = kamusport.objects.filter(portarp=portarpp).values_list('portint')
+                        portout = cekkamus[0][0]
+                        cekking = devices.objects.filter(device_id=device, stats='Booked', port=portout).values_list('new_device_mac')
+                        convert_mac = cekking[0][0]
+                        c_5 = convert_mac[:4]+"-"+convert_mac[4:8]+"-"+convert_mac[8:]
+                        matching = c_5 in findmac
+                        de_type = devices.objects.filter(device_id=device, stats='Booked', port=portout).values_list('new_device_type')
+                        dtype = de_type[0][0]
+                        add_ip = arp.objects.filter(mac=findmac).values_list('ipadd')
+                        add_ip_ok = add_ip[0][0]
+                        print(add_ip_ok)
+                        precon = devices.objects.filter(device_id=device, stats='Booked', port=portout).values_list('preconf')
+                        cons = precon[0][0]
+                        Huawei_os = "Huawei" in t_os
+                        Cisco_os = "Cisco" in t_os
+                        Mikrotik_os= "Mikrotik" in t_os
+                        print(t_os)
+                        print(findmac)
+                        if Cisco_os == True and dtype == 'router' and matching == True:
+                            ciscorouter(cons, de_type, add_ip_ok, findmac, akun, hos)
+                        elif Cisco_os == True and dtype == 'switch' and matching == True:
+                            ciscoswitch(cons, de_type, add_ip_ok, findmac, akun, hos)
+                        elif Huawei_os == True and dtype == 'router' and matching == True:
+                            huaweirouter(cons, add_ip_ok, de_type, mac_matching, akun, hos)
+                        elif Huawei_os == True and dtype == 'switch' and matching == True:
+                            huaweiswitch(cons, add_ip_ok, de_type, mac_matching, akun, hos)
+                        elif Mikrotik_os == True and dtype == 'router' and matching == True:
+                            mikrotikrouter(cons, de_type, add_ip_ok, mac_matching, akun, hos)
                         else:
                             logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages='Port Tidak Sesuai')
         elif os == 'ce' and de_type == 'switch':
@@ -712,96 +570,15 @@ def autoconf(device, akun):
                         print(Cisco_os)
                         print(Mikrotik_os)
                         if Cisco_os == True and dtype == 'router' and matching > 0:
-                            grup = AnsibleNetworkGroup.objects.get(name='Cisco')
-                            ciscorouter(cons, de_type, grup, add_ip_ok, findmac, akun, hos)
-
+                            ciscorouter(cons, de_type, add_ip_ok, findmac, akun, hos)
                         elif Huawei_os == True and dtype == 'router' and matching > 0:
-                            grup = AnsibleNetworkGroup.objects.get(name='Huawei')
-                            print("huawei router")
-                            savehost = AnsibleNetworkHost(host=cons,
-                                                ansible_ssh_host=add_ip_ok,
-                                                ansible_user='admin',
-                                                ansible_ssh_pass='huawei12345',
-                                                ansible_become_pass='huawei12345',
-                                                device_type=de_type,
-                                                group=grup)
-                            savehost.save()
-                            print(savehost)
-                            conf = ce_router.objects.get(name=cons)
-                            my_play = dict(
-                                    name="hostname",
-                                    hosts=cons,
-                                    become='yes',
-                                    become_method='enable',
-                                    gather_facts='no',
-                                    vars=[
-                                        dict(ansible_command_timeout=120)
-                                    ],
-                                    tasks=[
-                                        dict(action=dict(module='ce_config', commands=conf.hostname)),
-                                        dict(action=dict(module='ce_config', lines=[conf.ospf, conf.ospf_area, conf.ospf_network]))
-                                        ]
-                                    )
-                            result = execute(my_play)
-                            print(conf.name)
-                            print(result.results)
-                            kondisi = result.stats
-                            kond = kondisi['hosts'][0]['status']
-                            if kond == 'ok':
-                                devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
-                            else:
-                                fail = result.results
-                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
-                                print(f'{err}')
+                            huaweirouter(cons, add_ip_ok, de_type, mac_matching, akun, hos)
                         elif Huawei_os == True and dtype == 'switch' and matching > 0:
-                            grup = AnsibleNetworkGroup.objects.get(name='Huawei')
-                            print('huawei switch')
-                            huaweiswitch(cons, add_ip_ok, de_type, grup, mac_matching, akun, hos)
+                            huaweiswitch(cons, add_ip_ok, de_type, mac_matching, akun, hos)
                         elif Cisco_os == True and dtype == 'switch' and matching > 0:
-                            grup = AnsibleNetworkGroup.objects.get(name='Cisco')
-                            ciscoswitch(cons, de_type, grup, add_ip_ok, findmac, akun, hos)
-
+                            ciscoswitch(cons, de_type, add_ip_ok, findmac, akun, hos)
                         elif Mikrotik_os == True and dtype == 'router' and matching > 0:
-                            grup = AnsibleNetworkGroup.objects.get(name='Mikrotik')
-                            print('mikrotik router')
-                            savehost = AnsibleNetworkHost(host=cons,
-                                                    ansible_ssh_host=add_ip_ok,
-                                                    ansible_user='mikrotik',
-                                                    ansible_ssh_pass='54541691',
-                                                    ansible_become_pass='54541691',
-                                                    device_type=de_type,
-                                                    group=grup)
-                            savehost.save()
-                            conf = routeros_router.objects.get(name=cons)
-                            my_play = dict(
-                                    name="hostname",
-                                    hosts=cons,
-                                    become='yes',
-                                    become_method='enable',
-                                    gather_facts='no',
-                                    vars=[
-                                        dict(ansible_command_timeout=120)
-                                    ],
-                                    tasks=[
-                                        dict(action=dict(module='routeros_command', commands=conf.hostname)),
-                                        dict(action=dict(module='routeros_command', commands=conf.ospf)),
-                                        dict(action=dict(module='routeros_command', commands=conf.inter_vlan)),
-                                        dict(action=dict(module='routeros_coomand', commands=conf.ip_add_vlan))
-                                        ]
-                                )
-                            result = execute(my_play)
-                            kondisi = result.stats
-                            kond = kondisi['hosts'][0]['status']
-                            if kond == 'ok':
-                                devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
-                            else:
-                                fail = result.results
-                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
-                                print(f'{err}')
+                            mikrotikrouter(cons, de_type, add_ip_ok, mac_matching, akun, hos)
         elif os == 'routeros' and de_type == 'router':
             arp.objects.filter(device_id=device).delete()
             listip = devices.objects.filter(device_id=device, stats='Booked').values_list('ipadd')
@@ -848,12 +625,12 @@ def autoconf(device, akun):
             print(con)
             if con == 'ok':
                 output = result.results
-                dataport = output['success'][0]['tasks'][0]['result']['stdout_lines'][0][3:]
+                dataport = output['success'][0]['tasks'][0]['result']['stdout_lines'][0][2:]
                 maks = len(dataport)
                 for x in range(0, maks):
-                    ip = dataport[x][6:22].replace(" ","")
-                    mac = dataport[x][22:40].replace(" ","")
-                    portt = dataport[x][40:].replace(" ","")
+                    ip = dataport[x][5:20].replace(" ","")
+                    mac = dataport[x][21:39].replace(" ","")
+                    portt = dataport[x][39:46].replace(" ","")
                     coba = arp(ipadd=ip,
                                 mac=mac,
                                 port=portt,
@@ -882,19 +659,16 @@ def autoconf(device, akun):
                 if jumlah > 0:
                     ulang = False
                     for z in range(0, jumlah):
-                        findmac = match[z]
+                        findmac = match[z]#dlm bentuk AA:BB:CC:DD:EE
                         print(findmac)
                         get_vendor(findmac)
                         findos = mac_os.objects.filter(oui=get_vendor).values_list('vendor')
-                        t_os = findos[0][0]
+                        t_os = findos[0][0]#dpt vendor
                         getportarp = arp.objects.filter(device_id=device, mac=findmac).values_list('port')
                         portarpp = getportarp[0][0]
-                        cekking = devices.objects.filter(device_id=device, stats='Booked', port=portarpp).values_list('new_device_type')
+                        cekking = devices.objects.filter(device_id=device, stats='Booked', port=portarpp).values_list('new_device_mac')
                         convert_mac = cekking[0][0]
-                        c_1 = convert_mac.replace("-","")
-                        c_2 = c_1.replace(".","")
-                        c_3 = c_2.replace(":","")
-                        c_4 = c_3.upper()
+                        c_4 = convert_mac.upper()
                         c_5 = c_4[:2]+":"+c_4[2:4]+":"+c_4[4:6]+":"+c_4[6:8]+":"+c_4[8:10]+":"+c_4[10:]
                         print(c_5)
                         matching = c_5 in findmac
@@ -913,94 +687,15 @@ def autoconf(device, akun):
                         print(Cisco_os)
                         print(Mikrotik_os)
                         if Cisco_os == True and dtype == 'router' and matching == True:
-                            grup = AnsibleNetworkGroup.objects.get(name='Cisco')
-                            ciscorouter(cons, de_type, grup, add_ip_ok, findmac, akun, hos)
-
+                            ciscorouter(cons, de_type, add_ip_ok, findmac, akun, hos)
                         elif Huawei_os == True and dtype == 'router' and matching == True:
-                            grup = AnsibleNetworkGroup.objects.get(name='Huawei')
-                            savehost = AnsibleNetworkHost(host=cons,
-                                                ansible_ssh_host=add_ip_ok,
-                                                ansible_user='admin',
-                                                ansible_ssh_pass='huawei12345',
-                                                ansible_become_pass='huawei12345',
-                                                device_type=de_type,
-                                                group=grup)
-                            savehost.save()
-                            print(hos)
-                            conf = ce_router.objects.get(name=cons)
-                            my_play = dict(
-                                    name="hostname",
-                                    hosts=cons,
-                                    become='yes',
-                                    become_method='enable',
-                                    gather_facts='no',
-                                    vars=[
-                                        dict(ansible_command_timeout=120)
-                                    ],
-                                    tasks=[
-                                        dict(action=dict(module='ce_config', commands=conf.hostname)),
-                                        dict(action=dict(module='ce_config', lines=[conf.ospf, conf.ospf_area, conf.ospf_network]))
-                                        ]
-                                    )
-                            result = execute(my_play)
-                            print(conf.name)
-                            print(result.results)
-                            kondisi = result.stats
-                            kond = kondisi['hosts'][0]['status']
-                            if kond == 'ok':
-                                devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
-                            else:
-                                fail = result.results
-                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
-                                print(f'{err}')
+                            huaweirouter(cons, add_ip_ok, de_type, mac_matching, akun, hos)
                         elif Huawei_os == True and dtype == 'switch' and matching == True:
-                            grup = AnsibleNetworkGroup.objects.get(name='Huawei')
-                            huaweiswitch(cons, add_ip_ok, de_type, grup, mac_matching, akun, hos)
-
+                            huaweiswitch(cons, add_ip_ok, de_type, mac_matching, akun, hos)
                         elif Cisco_os == True and dtype == 'switch' and matching == True:
-                            grup = AnsibleNetworkGroup.objects.get(name='Cisco')
-                            ciscoswitch(cons, de_type, grup, add_ip_ok, findmac, akun, hos)
-
+                            ciscoswitch(cons, de_type, add_ip_ok, findmac, akun, hos)
                         elif Mikrotik_os == True and dtype == 'router' and matching == True:
-                            grup = AnsibleNetworkGroup.objects.get(name='Mikrotik')
-                            savehost = AnsibleNetworkHost(host=cons,
-                                                    ansible_ssh_host=add_ip_ok,
-                                                    ansible_user='mikrotik',
-                                                    ansible_ssh_pass='54541691',
-                                                    ansible_become_pass='54541691',
-                                                    device_type=de_type,
-                                                    group=grup)
-                            savehost.save()
-                            conf = routeros_router.objects.get(name=cons)
-                            my_play = dict(
-                                    name="hostname",
-                                    hosts=cons,
-                                    become='yes',
-                                    become_method='enable',
-                                    gather_facts='no',
-                                    vars=[
-                                        dict(ansible_command_timeout=120)
-                                    ],
-                                    tasks=[
-                                        dict(action=dict(module='routeros_command', commands=conf.hostname)),
-                                        dict(action=dict(module='routeros_command', commands=conf.ospf)),
-                                        dict(action=dict(module='routeros_command', commands=conf.inter_vlan)),
-                                        dict(action=dict(module='routeros_coomand', commands=conf.ip_add_vlan))
-                                        ]
-                                )
-                            result = execute(my_play)
-                            kondisi = result.stats
-                            kond = kondisi['hosts'][0]['status']
-                            if kond == 'ok':
-                                devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
-                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='SUCCESS')
-                            else:
-                                fail = result.results
-                                err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
-                                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages=err)
-                                print(f'{err}')
+                            mikrotikrouter(cons, de_type, add_ip_ok, mac_matching, akun, hos)
 
 
 def ciscorouter(cons, de_type, add_ip_ok, mac_matching, akun, hos):
@@ -1056,8 +751,8 @@ def ciscorouter(cons, de_type, add_ip_ok, mac_matching, akun, hos):
         logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Failed', messages=err)
         print(f'{err}')
 
-
-def ciscoswitch(cons, add_ip_ok, de_type, grup, host, mac_matching, akun):
+def ciscoswitch(cons, add_ip_ok, de_type, hos, mac_matching, akun):
+    grup = AnsibleNetworkGroup.objects.get(name='Cisco')
     savehost = AnsibleNetworkHost(host=cons,
             ansible_ssh_host=add_ip_ok,
             ansible_user='admin',
@@ -1092,15 +787,15 @@ def ciscoswitch(cons, add_ip_ok, de_type, grup, host, mac_matching, akun):
     kond = kondisi['hosts'][0]['status']
     if kond == 'ok':
         devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
-        logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='Success')
+        logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Success')
     else:
         fail = result.results
         err = fail['failed'][0]['tasks'][0]['result']['msg']
-        logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='Failed', messages=err)
+        logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Failed', messages=err)
         print(f'{err}')	
 
-
-def huaweiswitch(cons, add_ip_ok, de_type, grup, mac_matching, akun, host):
+def huaweiswitch(cons, add_ip_ok, de_type, mac_matching, akun, hos):
+    grup = AnsibleNetworkGroup.objects.get(name='Huawei')
     savehost = AnsibleNetworkHost(host=cons,
             ansible_ssh_host=add_ip_ok,
             ansible_user='admin',
@@ -1138,14 +833,15 @@ def huaweiswitch(cons, add_ip_ok, de_type, grup, mac_matching, akun, host):
     kond = kondisi['hosts'][0]['status']
     if kond == 'ok':
         devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
-        logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='Success')
+        logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Success')
     else:
         fail = result.results
         err = fail['failed'][0]['tasks'][0]['result']['msg']
-        logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='Failed', messages=err)
+        logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Failed', messages=err)
         print(f'{err}')
 
-def mikrotikrouter():
+def mikrotikrouter(cons, de_type, add_ip_ok, mac_matching, akun, hos):
+    grup = AnsibleNetworkGroup.objects.get(name='Mikrotik')
     savehost = AnsibleNetworkHost(host=cons,
                 ansible_ssh_host=add_ip_ok,
                 ansible_user='mikrotik',
@@ -1170,7 +866,15 @@ def mikrotikrouter():
             dict(action=dict(module='routeros_command', commands='/ip pool add name='+conf.dhcp_pool2+' ranges='+conf.dhcp_excluded2)),
             dict(action=dict(module='routeros_command', commands='/ip dhcp-server network add address '+conf.dhcp_network2+'/'+conf.dhcp_mask2+' gateway='+conf.default_router2)),
             dict(action=dict(module='routeros_command', commands='/ip pool add name='+conf.dhcp_pool3+' ranges='+conf.dhcp_excluded3)),
-            dict(action=dict(module='routeros_command', commands='/ip dhcp-server network add address '+conf.dhcp_network3+'/'+conf.dhcp_mask3+' gateway='+conf.default_router3))
+            dict(action=dict(module='routeros_command', commands='/ip dhcp-server network add address '+conf.dhcp_network3+'/'+conf.dhcp_mask3+' gateway='+conf.default_router3)),
+            dict(action=dict(module='routeros_command', commands='/interface vlan add name=vlan'+conf.i_vlan_enc+' vlan-id='+conf.i_vlan_enc+' interface='+conf.i_vlan_int)),
+            dict(action=dict(module='routeros_command', commands='/ip address add address='+conf.i_vlan_cmd+'/'+conf.i_vlan_maskmask+' interface=vlan'+conf.i_vlan_enc)),
+            dict(action=dict(module='routeros_command', commands='/interface vlan add name=vlan'+conf.i_vlan_enc2+' vlan-id='+conf.i_vlan_enc2+' interface='+conf.i_vlan_int2)),
+            dict(action=dict(module='routeros_command', commands='/ip address add address='+conf.i_vlan_cmd2+'/'+conf.i_vlan_mask2+' interface=vlan'+conf.i_vlan_enc2)),
+            dict(action=dict(module='routeros_command', commands='/routing ospf network add network='+conf.ospf_network+'/'+conf.ospf_mask+' area='+conf.ospf_area)),
+            dict(action=dict(module='routeros_command', commands='/routing ospf network add network='+conf.ospf_network2+'/'+conf.ospf_mask2+' area='+conf.ospf_area2)),
+            dict(action=dict(module='routeros_command', commands='/routing ospf network add network='+conf.ospf_network3+'/'+conf.ospf_mask3+' area='+conf.ospf_area3)),
+            dict(action=dict(module='routeros_command', commands='/ip route add dst-address=0.0.0.0/0 gateway='+conf.default_gateway))
         ]
     )
     result = execute(my_play)
@@ -1178,13 +882,60 @@ def mikrotikrouter():
     kond = kondisi['hosts'][0]['status']
     if kond == 'ok':
         devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
-        logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='Success')
+        logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Success')
     else:
         fail = result.results
         err = fail['failed'][0]['tasks'][0]['result']['msg']
-        logs = log.objects.filter(account=akun, targetss=host.host, action='Auto Configuration', status='PENDING').update(status='Failed', messages=err)
+        logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Failed', messages=err)
 
-
+def huaweirouter(cons, add_ip_ok, de_type, mac_matching, akun, hos):
+    grup = AnsibleNetworkGroup.objects.get(name='Huawei')
+    savehost = AnsibleNetworkHost(host=cons,
+            ansible_ssh_host=add_ip_ok,
+            ansible_user='admin',
+            ansible_ssh_pass='huawei12345',
+            ansible_become_pass='huawei12345',
+            device_type=de_type,
+            group=grup)
+    savehost.save()
+    conf = ios_router.objects.get(name=cons)
+    my_play=dict(
+        name="Autoconfig",
+        hosts=cons,
+        become='yes',
+        become_method='enable',
+        gather_facts='no',
+        vars=[
+            dict(ansible_command_timeout=120)
+        ],
+        tasks=[
+            dict(action=dict(module='ce_config', lines=['dhcp enable', 'ip pool '+conf.dhcp_pool, 'network '+conf.dhcp_network+' mask '+conf.dhcp_mask, 'gateway-list '+conf.default_router, 'excluded-ip-address '+conf.dhcp_excluded])),
+            dict(action=dict(module='ce_config', lines=['ip pool '+conf.dhcp_pool2, 'network '+conf.dhcp_network2+' mask '+conf.dhcp_mask2, 'gateway-list '+conf.default_router2, 'excluded-ip-address '+conf.dhcp_excluded2])),
+            dict(action=dict(module='ce_config', lines=['ip pool '+conf.dhcp_pool3, 'network '+conf.dhcp_network3+' mask '+conf.dhcp_mask3, 'gateway-list '+conf.default_router3, 'excluded-ip-address '+conf.dhcp_excluded3])),
+            dict(action=dict(module='ce_config', lines=['int '+conf.port_ip, 'ip add '+conf.port_cmd+' '+conf.port_mask, 'dhcp select interface', 'undo sh'])),
+            dict(action=dict(module='ce_config', lines=['int '+conf.i_vlan_int, 'ip address '+conf.i_vlan_cmd+' '+conf.i_vlan_mask, 'dot1q termination vid '+enc.i_vlan_enc])),
+            dict(action=dict(module='ce_config', lines=['int '+conf.i_vlan_int2, 'ip address '+conf.i_vlan_cmd2+' '+conf.i_vlan_mask2, 'dot1q termination vid '+enc.i_vlan_enc2])),
+            dict(action=dict(module='ce_config', lines=['ospf', 'area '+conf.ospf_area, 'network '+conf.ospf_network+' '+conf.ospf_mask])),
+            dict(action=dict(module='ce_config', lines=['ospf', 'area '+conf.ospf_area2, 'network '+conf.ospf_network2+' '+conf.ospf_mask2])),
+            dict(action=dict(module='ce_config', lines=['ospf', 'area '+conf.ospf_area3, 'network '+conf.ospf_network3+' '+conf.ospf_mask3])),
+            dict(action=dict(module='ce_config', lines=['ip route-static 0.0.0.0 0.0.0.0 '+conf.default_gateway])),
+            dict(action=dict(module='ce_config', lines=['lldp enable'])),
+            dict(action=dict(module='ce_config', lines=['scp server enable'])),
+            dict(action=dict(module='ce_config', lines=['int g0/0', 'ip address '+add_ip_ok+' 255.255.255.0']))
+        ]
+    )
+    result=execute(my_play)
+    kondisi = result.stats
+    kond = kondisi['hosts'][0]['status']
+    if kond == 'ok':
+        devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
+        logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Success')
+    else:
+        fail = result.results
+        err = fail['failed'][0]['tasks'][0]['result']['msg']
+        logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Failed', messages=err)
+        print(f'{err}')
+    
 def get_vendor(findmac):
     get1 = findmac.replace("-","")
     get2 = get1.replace(".","")
@@ -1200,3 +951,105 @@ def lower_mac(findmac):
     get3 = get2.replace(":","")
     get4 = get3.lower()
     return(get4)
+
+def arpcisco(host, request):
+    my_play = dict(
+        name = "show arp",
+        hosts = host.host,
+        become='yes',
+        become_method='enable',
+        gather_facts='no',
+        vars=[
+            dict(ansible_command_timeout=120)
+        ],
+        tasks=[
+            dict(action=dict(module='ios_command', commands='sh ip arp'))
+        ]
+    )
+    result = execute(my_play)
+    condition = result.stats
+    con = condition['hosts'][0]['status']
+    if con == 'ok':
+        output = result.results
+        dataport = output['success'][0]['tasks'][0]['result']['stdout_lines'][0][1:]
+        maks = len(dataport)
+        for x in range(0, maks):
+            ip = dataport[x][10:25].replace(" ","")
+            mac = dataport[x][38:52].replace(" ","")
+            portt = dataport[x][61:].replace(" ","")
+            coba = arp(ipadd=ip,
+                        mac=mac,
+                        port=portt,
+                        device_id=host)
+            coba.save()
+    else:
+        messages.warning(request, f'Check Connection to Remote Host!')
+        return redirect('arp')
+
+def arpmikrotik(host, request):
+    my_play = dict(
+        name = "show arp",
+        hosts = host.host,
+        become='yes',
+        become_method='enable',
+        gather_facts='no',
+        vars=[
+            dict(ansible_command_timeout=120)
+        ],
+        tasks=[
+            dict(action=dict(module='routeros_command', commands='/ip arp print'))
+        ]
+    )
+    result = execute(my_play)
+    condition = result.stats
+    con = condition['hosts'][0]['status']
+    if con == 'ok':
+        output = result.results
+        dataport = output['success'][0]['tasks'][0]['result']['stdout_lines'][0][2:]
+        maks = len(dataport)
+        for x in range(0, maks):
+            ip = dataport[x][5:20].replace(" ","")
+            mac = dataport[x][21:39].replace(" ","")
+            portt = dataport[x][39:46].replace(" ","")
+            coba = arp(ipadd=ip,
+                        mac=mac,
+                        port=portt,
+                        device_id=host)
+            coba.save()
+    else:
+         messages.warning(request, f'Check Connection to Remote Host!')
+         return redirect('arp')
+
+def arphuawei(host, request):
+    my_play = dict(
+        name = "show arp",
+        hosts = host.host,
+        become='yes',
+        become_method='enable',
+        gather_facts='no',
+        vars=[
+            dict(ansible_command_timeout=120)
+        ],
+        tasks=[
+            dict(action=dict(module='ce_command', commands='display arp'))
+        ]
+    )
+    result = execute(my_play)
+    condition = result.stats
+    con = condition['hosts'][0]['status']
+    if con == 'ok':
+        output = result.results
+        dataport = output['success'][0]['tasks'][0]['result']['stdout_lines'][0][3:]
+        maks = len(dataport)
+        for x in range(0, maks):
+            ip = dataport[x][:15].replace(" ","")
+            mac = dataport[x][16:31].replace(" ","")
+            portt = dataport[x][47:60].replace(" ","")
+            coba = arp(ipadd=ip,
+                        mac=mac,
+                        port=portt,
+                        device_id=host)
+            coba.save()
+    else:
+         messages.warning(request, f'Check Connection to Remote Host!')
+         return redirect('arp')
