@@ -195,9 +195,10 @@ def autoconf(device, akun):
                 if jumlah > 0:
                     ulang = False
                     for z in range(0, jumlah):
-                        findmac = match[z]
-                        get_vendor(findmac)# function Mengubah value match untuk mendapatkan vendor
-                        findos = mac_os.objects.filter(oui=get_vendor).values_list('vendor')
+                        findmac = match[z]# function Mengubah value match untuk mendapatkan vendor
+                        mac_vendor = get_vendor(findmac)
+                        print(mac_vendor)
+                        findos = mac_os.objects.filter(oui=mac_vendor).values_list('vendor')
                         t_os = findos[0][0]#dapat vendor
                         print(t_os)
                         mac_matching = lower_mac(findmac)
@@ -309,8 +310,9 @@ def autoconf(device, akun):
                     ulang = False
                     for z in range(0, jumlah):
                         findmac = match[z]#dlm bentuk aabb.ccdd.eeff
-                        get_vendor(findmac)
-                        findos = mac_os.objects.filter(oui=get_vendor).values_list('vendor')
+                        mac_vendor = get_vendor(findmac)
+                        print(mac_vendor)
+                        findos = mac_os.objects.filter(oui=mac_vendor).values_list('vendor')
                         t_os = findos[0][0]#dapat vendor
                         getportarp = arp.objects.filter(device_id=device, mac=findmac).values_list('port')
                         portarpp = getportarp[0][0]#'GigabitEthernet0/0/1'
@@ -318,6 +320,8 @@ def autoconf(device, akun):
                         convert_mac = cekking[0][0]
                         c_5 = convert_mac[:4]+"."+convert_mac[4:8]+"."+convert_mac[8:]#dlm bentuk ios aabb.ccdd.eeff
                         print(c_5)
+                        print(t_os)
+                        mac_matching = lower_mac(findmac)
                         matching = c_5 in findmac # matching mac Arp dengan mac booking 
                         de_type = devices.objects.filter(device_id=device, stats='Booked', port=portarpp).values_list('new_device_type')
                         dtype = de_type[0][0]
@@ -328,14 +332,14 @@ def autoconf(device, akun):
                         cons = precon[0][0]
                         Huawei_os = "Huawei" in t_os
                         Cisco_os = "Cisco" in t_os
-                        Mikrotik_os= "Mikrotik" in t_os
+                        Mikrotik_os= "Routerboard" in t_os
                         print(Huawei_os)
                         print(Cisco_os)
                         print(Mikrotik_os)
                         if Cisco_os == True and dtype == 'router' and matching == True:
-                            ciscorouter(cons, de_type, add_ip_ok, findmac, akun, hos)
+                            ciscorouter(cons, de_type, add_ip_ok, mac_matching, akun, hos)
                         elif Cisco_os == True and dtype == 'switch' and matching == True:
-                            ciscoswitch(cons, de_type, add_ip_ok, findmac, akun, hos)
+                            ciscoswitch(cons, de_type, add_ip_ok, mac_matching, akun, hos)
                         elif Huawei_os == True and dtype == 'router' and matching == True:
                             huaweirouter(cons, add_ip_ok, de_type, mac_matching, akun, hos)
                         elif Huawei_os == True and dtype == 'switch' and matching == True:
@@ -344,7 +348,7 @@ def autoconf(device, akun):
                             mikrotikrouter(cons, de_type, add_ip_ok, mac_matching, akun, hos)
                         else:
                             logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages='Port Tidak Sesuai')
-        elif os == 'ce' and de_type == 'router':
+        elif os == 'ce' and tipe == 'router':
             arp.objects.filter(device_id=device).delete()
             listip = devices.objects.filter(device_id=device, stats='Booked').values_list('ipadd') # mendapatkan list Ip address yang dipesan portnya
             total = len(listip) #total list ip port yang dibooked
@@ -382,7 +386,7 @@ def autoconf(device, akun):
                     ]
                 )
             result = execute(my_play2)
-            print(my_play)
+            print(my_play2)
             condition = result.stats
             print(condition)
             mac_booked = []
@@ -426,8 +430,9 @@ def autoconf(device, akun):
                     ulang = False
                     for z in range(0, jumlah):
                         findmac = match[z]
-                        get_vendor(findmac)
-                        findos = mac_os.objects.filter(oui=get_vendor).values_list('vendor')
+                        mac_vendor = get_vendor(findmac)
+                        print(mac_vendor)
+                        findos = mac_os.objects.filter(oui=mac_vendor).values_list('vendor')
                         t_os = findos[0][0]
                         getportarp = arp.objects.filter(device_id=device, mac=findmac).values_list('port')
                         portarpp = getportarp[0][0]
@@ -461,7 +466,7 @@ def autoconf(device, akun):
                             mikrotikrouter(cons, de_type, add_ip_ok, mac_matching, akun, hos)
                         else:
                             logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages='Port Tidak Sesuai')
-        elif os == 'ce' and de_type == 'switch':
+        elif os == 'ce' and tipe == 'switch':
             arp.objects.filter(device_id=device).delete()
             broadcast = devices.objects.filter(device_id=device, port='Vlanif1').values_list('ipadd')
             ping_ip = broadcast[0][0]
@@ -542,8 +547,9 @@ def autoconf(device, akun):
                     ulang = False
                     for z in range(0, jumlah):
                         findmac = match[z]
-                        get_vendor(findmac)
-                        findos = mac_os.objects.filter(oui=get_vendor).values_list('vendor')
+                        mac_vendor = get_vendor(findmac)
+                        print(mac_vendor)
+                        findos = mac_os.objects.filter(oui=mac_vendor).values_list('vendor')
                         t_os = findos[0][0]
                         print(t_os)
                         print(findmac)
@@ -579,7 +585,9 @@ def autoconf(device, akun):
                             ciscoswitch(cons, de_type, add_ip_ok, findmac, akun, hos)
                         elif Mikrotik_os == True and dtype == 'router' and matching > 0:
                             mikrotikrouter(cons, de_type, add_ip_ok, mac_matching, akun, hos)
-        elif os == 'routeros' and de_type == 'router':
+                        else:
+                            logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='FAILED', messages='Port Tidak Sesuai')
+        elif os == 'routeros' and tipe == 'router':
             arp.objects.filter(device_id=device).delete()
             listip = devices.objects.filter(device_id=device, stats='Booked').values_list('ipadd')
             total = len(listip)
@@ -596,15 +604,15 @@ def autoconf(device, akun):
                     become_method='enable',
                     gather_facts='no',
                     vars=[
-                            dict(ansible_command_timeout=120)
+                            dict(ansible_command_timeout=10)
                     ],
                     tasks=[
                         dict(action=dict(module='routeros_command', commands='ping '+change))
                     ]
                 )
                 result1 = execute(my_play)#eksekusi ping broadcast
-            my_play = dict(name="show arp",
-                            host=hos.host,
+            my_play1 = dict(name="show arp",
+                            hosts=hos.host,
                             become='yes',
                             become_method='enable',
                             gather_facts='no',
@@ -615,8 +623,8 @@ def autoconf(device, akun):
                                 dict(action=dict(module='routeros_command', commands='/ip arp print'))
                                 ]
                             )
-            result = execute(my_play)
-            print(my_play)
+            result = execute(my_play1)
+            print(my_play1)
             condition = result.stats
             print(condition)
             mac_booked = []
@@ -625,7 +633,7 @@ def autoconf(device, akun):
             print(con)
             if con == 'ok':
                 output = result.results
-                dataport = output['success'][0]['tasks'][0]['result']['stdout_lines'][0][2:]
+                dataport = output['success'][0]['tasks'][0]['result']['stdout_lines'][0][3:]
                 maks = len(dataport)
                 for x in range(0, maks):
                     ip = dataport[x][5:20].replace(" ","")
@@ -634,7 +642,7 @@ def autoconf(device, akun):
                     coba = arp(ipadd=ip,
                                 mac=mac,
                                 port=portt,
-                                device_id=host)
+                                device_id=hos)
                     coba.save()
                 bookeds = devices.objects.filter(device_id=device, stats='Booked').values_list('new_device_mac')
                 m_max = len(bookeds)
@@ -661,8 +669,9 @@ def autoconf(device, akun):
                     for z in range(0, jumlah):
                         findmac = match[z]#dlm bentuk AA:BB:CC:DD:EE
                         print(findmac)
-                        get_vendor(findmac)
-                        findos = mac_os.objects.filter(oui=get_vendor).values_list('vendor')
+                        mac_vendor = get_vendor(findmac)
+                        print(mac_vendor)
+                        findos = mac_os.objects.filter(oui=mac_vendor).values_list('vendor')
                         t_os = findos[0][0]#dpt vendor
                         getportarp = arp.objects.filter(device_id=device, mac=findmac).values_list('port')
                         portarpp = getportarp[0][0]
@@ -682,7 +691,7 @@ def autoconf(device, akun):
                         print(t_os)
                         Huawei_os = "Huawei" in t_os
                         Cisco_os = "Cisco" in t_os
-                        Mikrotik_os= "Mikrotik" in t_os
+                        Mikrotik_os= "Routerboard" in t_os
                         print(Huawei_os)
                         print(Cisco_os)
                         print(Mikrotik_os)
@@ -779,7 +788,7 @@ def ciscoswitch(cons, add_ip_ok, de_type, hos, mac_matching, akun):
             dict(action=dict(module='ios_config', lines=['sw mo '+conf.mode2, 'sw ac vl '+conf.vlan2], parents='int '+conf.interface2)),
             dict(action=dict(module='ios_config', commands='ip scp server enable')),
             dict(action=dict(module='ios_config', commands='ip default-gateway '+conf.gateway)),
-            dict(action=dict(module='ios_config', lines=['ip add '+add_ip_ok+' 255.255.255.0'], parents='int fa0/1'))
+            dict(action=dict(module='ios_config', lines=['ip add '+add_ip_ok+' 255.255.255.0'], parents='int vl 1'))
         ]
     )
     result = execute(my_play)
@@ -825,7 +834,7 @@ def huaweiswitch(cons, add_ip_ok, de_type, mac_matching, akun, hos):
             dict(action=dict(module='ce_config', lines=['lldp enable'])),
             dict(action=dict(module='ce_config', lines=['ip route-static 0.0.0.0 0.0.0.0 '+conf.gateway])),
             dict(action=dict(module='ce_config', lines=['scp server enable'])),
-            dict(action=dict(module='ce_config', lines=['int g0/1', 'ip address '+add_ip_ok+' 255.255.255.0']))
+            dict(action=dict(module='ce_config', lines=['int vl 1', 'ip address '+add_ip_ok+' 255.255.255.0']))
         ]
     )
     result=execute(my_play)
@@ -850,7 +859,7 @@ def mikrotikrouter(cons, de_type, add_ip_ok, mac_matching, akun, hos):
                 device_type=de_type,
                 group=grup)
     savehost.save()
-    conf = ios_router.objects.get(name=cons)
+    conf = iosrouter.objects.get(name=cons)
     my_play = dict(
         name="Autoconfig",
         hosts=cons,
@@ -861,20 +870,23 @@ def mikrotikrouter(cons, de_type, add_ip_ok, mac_matching, akun, hos):
             dict(ansible_command_timeout=120)
         ],
         tasks=[
+            dict(action=dict(module='routeros_command', commands='/system identitiy set name='+conf.hostname)),
             dict(action=dict(module='routeros_command', commands='/ip pool add name='+conf.dhcp_pool+' ranges='+conf.dhcp_excluded)),
             dict(action=dict(module='routeros_command', commands='/ip dhcp-server network add address '+conf.dhcp_network+'/'+conf.dhcp_mask+' gateway='+conf.default_router)),
             dict(action=dict(module='routeros_command', commands='/ip pool add name='+conf.dhcp_pool2+' ranges='+conf.dhcp_excluded2)),
             dict(action=dict(module='routeros_command', commands='/ip dhcp-server network add address '+conf.dhcp_network2+'/'+conf.dhcp_mask2+' gateway='+conf.default_router2)),
             dict(action=dict(module='routeros_command', commands='/ip pool add name='+conf.dhcp_pool3+' ranges='+conf.dhcp_excluded3)),
             dict(action=dict(module='routeros_command', commands='/ip dhcp-server network add address '+conf.dhcp_network3+'/'+conf.dhcp_mask3+' gateway='+conf.default_router3)),
+            dict(action=dict(module='routeros_command', commands='/ip address add address='+conf.port_cmd+'/'+conf.port_mask+' interface='+conf.port_ip)),
             dict(action=dict(module='routeros_command', commands='/interface vlan add name=vlan'+conf.i_vlan_enc+' vlan-id='+conf.i_vlan_enc+' interface='+conf.i_vlan_int)),
-            dict(action=dict(module='routeros_command', commands='/ip address add address='+conf.i_vlan_cmd+'/'+conf.i_vlan_maskmask+' interface=vlan'+conf.i_vlan_enc)),
+            dict(action=dict(module='routeros_command', commands='/ip address add address='+conf.i_vlan_cmd+'/'+conf.i_vlan_mask+' interface=vlan'+conf.i_vlan_enc)),
             dict(action=dict(module='routeros_command', commands='/interface vlan add name=vlan'+conf.i_vlan_enc2+' vlan-id='+conf.i_vlan_enc2+' interface='+conf.i_vlan_int2)),
             dict(action=dict(module='routeros_command', commands='/ip address add address='+conf.i_vlan_cmd2+'/'+conf.i_vlan_mask2+' interface=vlan'+conf.i_vlan_enc2)),
             dict(action=dict(module='routeros_command', commands='/routing ospf network add network='+conf.ospf_network+'/'+conf.ospf_mask+' area='+conf.ospf_area)),
             dict(action=dict(module='routeros_command', commands='/routing ospf network add network='+conf.ospf_network2+'/'+conf.ospf_mask2+' area='+conf.ospf_area2)),
             dict(action=dict(module='routeros_command', commands='/routing ospf network add network='+conf.ospf_network3+'/'+conf.ospf_mask3+' area='+conf.ospf_area3)),
             dict(action=dict(module='routeros_command', commands='/ip route add dst-address=0.0.0.0/0 gateway='+conf.default_gateway))
+            #tambahin ip dhcp-server add interface address-pool= trus di enable
         ]
     )
     result = execute(my_play)
@@ -898,7 +910,7 @@ def huaweirouter(cons, add_ip_ok, de_type, mac_matching, akun, hos):
             device_type=de_type,
             group=grup)
     savehost.save()
-    conf = ios_router.objects.get(name=cons)
+    conf = iosrouter.objects.get(name=cons)
     my_play=dict(
         name="Autoconfig",
         hosts=cons,
@@ -1005,7 +1017,7 @@ def arpmikrotik(host, request):
     con = condition['hosts'][0]['status']
     if con == 'ok':
         output = result.results
-        dataport = output['success'][0]['tasks'][0]['result']['stdout_lines'][0][2:]
+        dataport = output['success'][0]['tasks'][0]['result']['stdout_lines'][0][3:]
         maks = len(dataport)
         for x in range(0, maks):
             ip = dataport[x][5:20].replace(" ","")

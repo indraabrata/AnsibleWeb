@@ -164,10 +164,12 @@ def prekonfig(request, pk):
         if state == 'empty':
             if request.method == 'POST':
                 form_ios = ios_router(request.POST)
+                print(request.POST)
                 if form_ios.is_valid():
                     data = request.POST
                     datamac = data['mac']
-                    macdata(datamac)
+                    macc = macdata(datamac)
+                    print(macc)
                     coba = iosrouter(name=data['name'],
                                     hostname=data['name'],
 
@@ -220,7 +222,8 @@ def prekonfig(request, pk):
                                     port_id=select)
                     coba.save()
                     idd = select.id
-                    devices.objects.filter(id=idd).update(preconf=data['name'] ,new_device_mac=datamac ,stats='Booked')
+                    print(idd)
+                    devices.objects.filter(id=idd).update(preconf=data['name'] , new_device_mac=macc,stats='Booked')
                     messages.success(request, f'Successfully create PreConfiguration!')
                     return redirect('/')
             else:
@@ -234,10 +237,8 @@ def prekonfig(request, pk):
             if request.method == 'POST':
                 form_ios = ios_router(request.POST)
                 if form_ios.is_valid():
+                    print('UPDATE')
                     data = request.POST
-                    datamac = data['mac']
-                    macdata(datamac)
-                    print(request.POST)
                     iosrouter.objects.filter(port_id=select).update(name=data['name'],
                                                                     hostname=data['name'],
                                                                     port_ip=data['port_ip'],
@@ -287,7 +288,10 @@ def prekonfig(request, pk):
                                                                     default_gateway=data['default_gateway'])
 
                     idd = select.id
-                    devices.objects.filter(id=idd).update(preconf=data['name'], new_device_mac=macdata, stats='Booked')
+                    print(idd)
+                    datamac = data['mac']
+                    macc = macdata(datamac)
+                    devices.objects.filter(id=idd).update(preconf=data['name'], new_device_mac=macc, stats='Booked')
                     messages.success(request, f'Successfully update PreConfiguration!')
                     return redirect('/')
             else:
@@ -304,7 +308,7 @@ def prekonfig(request, pk):
                 if form_ios.is_valid():
                     data = request.POST
                     datamac = data['mac']
-                    macdata(datamac)
+                    macc = macdata(datamac)
                     print(request.POST)
                     coba = ios_switch(name=data['name'],
                                     hostname=data['name'],
@@ -330,7 +334,7 @@ def prekonfig(request, pk):
                                     port_id=select)
                     coba.save()
                     idd = select.id
-                    devices.objects.filter(id=idd).update(preconf=data['name'] ,new_device_mac=macdata ,stats='Booked')
+                    devices.objects.filter(id=idd).update(preconf=data['name'] ,new_device_mac=macc ,stats='Booked')
                     messages.success(request, f'Successfully create PreConfiguration!')
                     return redirect('/')
             else:
@@ -346,7 +350,7 @@ def prekonfig(request, pk):
                 if form_ios.is_valid():
                     data = request.POST
                     datamac = data['mac']
-                    macdata(datamac)
+                    macc = macdata(datamac)
                     print(request.POST)
                     ios_switch.objects.filter(port_id=select).update(name=data['name'],
                                     hostname=data['name'],
@@ -354,9 +358,8 @@ def prekonfig(request, pk):
                                     vlan_name=data['vlan_name'],
                                     port_id=select)
                     idd = select.id
-                    lihat= devices.objects.filter(id=idd).update(preconf=data['name'], new_device_mac=macdata ,stats='Booked')
+                    lihat= devices.objects.filter(id=idd).update(preconf=data['name'], new_device_mac=macc ,stats='Booked')
                     print(lihat)
-                    print(get4)
                     messages.success(request, f'Successfully update PreConfiguration!')
                     return redirect('/')
             else:
@@ -405,7 +408,7 @@ def log_info(request):
 
 
 def macdata(datamac):
-    get1 = macdata.replace("-","")
+    get1 = datamac.replace("-","")
     get2 = get1.replace(".","")
     get3 = get2.replace(":","")
     get4 = get3.lower()
