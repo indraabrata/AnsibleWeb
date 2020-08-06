@@ -330,6 +330,8 @@ def prekonfig(request, pk):
                                     mode2=data['mode2'],
                                     vlan2=data['vlan2'],
 
+                                    gateway=data['gateway'],
+
 
                                     port_id=select)
                     coba.save()
@@ -354,8 +356,24 @@ def prekonfig(request, pk):
                     print(request.POST)
                     ios_switch.objects.filter(port_id=select).update(name=data['name'],
                                     hostname=data['name'],
+
                                     vlan_id=data['vlan_id'],
                                     vlan_name=data['vlan_name'],
+
+                                    vlan_id2=data['vlan_id2'],
+                                    vlan_name2=data['vlan_name2'],
+
+                                    vlan_id3=data['vlan_id3'],
+                                    vlan_name3=data['vlan_name3'],
+
+                                    interface=data['interface'],
+                                    mode=data['mode'],
+                                    vlan=data['vlan'],
+
+                                    interface2=data['interface2'],
+                                    mode2=data['mode2'],
+                                    vlan2=data['vlan2'],
+                                    gateway=data['gateway'],
                                     port_id=select)
                     idd = select.id
                     lihat= devices.objects.filter(id=idd).update(preconf=data['name'], new_device_mac=macc ,stats='Booked')
