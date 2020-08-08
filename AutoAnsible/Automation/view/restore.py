@@ -40,7 +40,7 @@ def restorecisco(request):
                         become_method='enable',
                         gather_facts='no',
                         tasks=[
-                            dict(net_put=dict(src='/home/indra/autonet/AutoAnsible/backup/{{inventory_hostname}}.config', protocol='scp', dest='flash0:/{{inventory_hostname}}.config')),
+                            dict(net_put=dict(src='./backup/{{inventory_hostname}}.config', protocol='scp', dest='flash:/{{inventory_hostname}}.config')),
                             dict(action=dict(module='ios_command', commands=['config replace flash:{{inventory_hostname}}.config force']))
                             ]
                         )

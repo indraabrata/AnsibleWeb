@@ -85,9 +85,9 @@ def backup_act(target, akun,os):
             ],
             tasks=[
                 dict(action=dict(module='ios_config', backup='yes'), register='output'),
-                dict(action=dict(module='copy', src="{{output.backup_path}}", dest="/home/indra/autonet/AutoAnsible/backup/{{inventory_hostname}}.config")),
-                dict(action=dict(module='lineinfile', path="/home/indra/autonet/AutoAnsible/backup/{{inventory_hostname}}.config", line="Building configuration...", state='absent')),
-                dict(action=dict(module='lineinfile', path="/home/indra/autonet/AutoAnsible/backup/{{inventory_hostname}}.config", regexp="Current configuration.*", state='absent'))
+                dict(action=dict(module='copy', src="{{output.backup_path}}", dest="./backup/{{inventory_hostname}}.config")),
+                dict(action=dict(module='lineinfile', path="./backup/{{inventory_hostname}}.config", line="Building configuration...", state='absent')),
+                dict(action=dict(module='lineinfile', path="./backup/{{inventory_hostname}}.config", regexp="Current configuration.*", state='absent'))
                 ]
             )
         result = execute(my_play)

@@ -611,6 +611,7 @@ def autoconf(device, akun):
                 ]
             )
             result1 = execute(my_play)#eksekusi ping broadcast
+            print(result1.results)
             my_play1 = dict(name="show arp",
                             hosts=hos.host,
                             become='yes',
@@ -799,10 +800,72 @@ def ciscoswitch(cons, add_ip_ok, de_type, mac_matching, akun, hos):
     kondisi = result.stats
     kond = kondisi['hosts'][0]['status']
     if kond == 'ok':
-        print('Success autoconfig')
-        print(result.results)
-        devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
-        logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Success')
+        getconfig = dict(
+            name="Backup",
+            hosts=cons,
+            become='yes',
+            become_method='enable',
+            gather_facts='no',
+            vars=[
+                dict(ansible_command_timeout=120)
+            ],
+            tasks=[
+                dict(action=dict(module='ios_config', backup='yes'), register='output'),
+                dict(action=dict(module='copy', src="{{output.backup_path}}", dest="./backup/{{inventory_hostname}}.config")),
+                dict(action=dict(module='lineinfile', path="./backup/{{inventory_hostname}}.config", line="Building configuration...", state='absent')),
+                dict(action=dict(module='lineinfile', path="./backup/{{inventory_hostname}}.config", regexp="Current configuration.*", state='absent'))
+                ]
+        )
+        hasil = execute(getconfig)
+        cond = hasil.stats
+        conditions = cond['hosts'][0]['status']
+        if conditions == 'ok':
+            print("backup config berhasil")
+            fin = open("./backup/"+cons+".config", "rt")
+            data = fin.read()
+            data = data.replace(' ip address dhcp\n!', ' ip address '+add_ip_ok+' 255.255.255.0\n!\nip default-gateway '+conf.gateway+'\n!')
+            fin.close()
+            fin = open("./backup/"+cons+".config", "wt")
+            cek = fin.write(data)
+            fin.close()
+            print(cek)
+            restoreconf = dict(
+                name="restore",
+                hosts=cons,
+                become='yes',
+                become_method='enable',
+                gather_facts='no',
+                vars=[
+                    dict(ansible_command_timeout=120)
+                ],
+                tasks=[
+                    dict(net_put=dict(src='./backup/{{inventory_hostname}}.config', protocol='scp', dest='flash:/{{inventory_hostname}}.config')),
+                    dict(action=dict(module='ios_command', commands=['config replace flash:{{inventory_hostname}}.config force']))
+                ]
+            )
+            hasilrestore = execute(restoreconf)
+            conds = hasilrestore.stats
+            condit = conds['hosts'][0]['status']
+            print(condit)
+            if condit == 'ok':
+                print("Restore berhasil")
+                print('Success autoconfig')
+                print(hasilrestore.results)
+                devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
+                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Success')
+            else:
+                print('Failed autoconfig')
+                fail = hasilrestore.results
+                print(hasilrestore.results)
+                err = fail['failed'][0]['tasks'][0]['result']['msg']
+                logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Failed', messages=err)
+                print(f'{err}')	
+        else:
+            print('Failed autoconfig')
+            fail = hasil.results
+            err = fail['failed'][0]['tasks'][0]['result']['msg']
+            logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Failed', messages=err)
+            print(f'{err}')	
     else:
         print('Failed autoconfig')
         fail = result.results
