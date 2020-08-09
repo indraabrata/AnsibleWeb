@@ -1,0 +1,143 @@
+{% extends "ansibleweb/base.html" %}
+{% block content %}
+    {% load crispy_forms_tags %}
+    {% load widget_tweaks %}
+    <section class="dashboard-counts section-padding">
+        <div class="container fluid dashboard-content">
+            <div class="row">
+                <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+                  <div class="page-header">
+                    <h2 class="pageheader-title">List Preconfiguration Switch</h2>
+                    <p class="pageheader-text">Create list of configuration for new switch device</p>
+                  </div>
+                </div>
+              </div>
+          <div class="row d-flex align-items-md-stretch">
+            <div class="col-lg-8">
+           <div class="card">
+          <form method="POST" class="text-left">
+               {% csrf_token %}
+               <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>Name File</label>
+                    </div>
+                    <div class="col-8">
+                        <div class="input-group">
+                            {% render_field form.namefile class="form-control form-fix-size" placeholder="Name Host" required='required' %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>Vlan</label>
+                    </div>
+                    <div class="col-8">
+                        <div class="input-group">
+                            {% render_field form.vlan_id class="form-control form-fix-size" placeholder="Vlan" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form.vlan_name class="form-control form-fix-size" placeholder="Name" required='required' %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>Vlan</label>
+                    </div>
+                    <div class="col-8">
+                        <div class="input-group">
+                            {% render_field form.vlan_id2 class="form-control form-fix-size" placeholder="Vlan" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form.vlan_name2 class="form-control form-fix-size" placeholder="Name" required='required' %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>Vlan</label>
+                    </div>
+                    <div class="col-8">
+                        <div class="input-group">
+                            {% render_field form.vlan_id3 class="form-control form-fix-size" placeholder="Vlan" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form.vlan_name3 class="form-control form-fix-size" placeholder="Name" required='required' %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>Add Vlan interface</label>
+                    </div>
+                    <div class="col-8">
+                        <div class="input-group">
+                            {% render_field form.interface class="form-control form-fix-size" placeholder="Interface" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form.mode class="form-control form-fix-size" placeholder="Switch mode" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form.vlan class="form-control form-fix-size" placeholder="Vlan" required='required' %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>Add Vlan interface</label>
+                    </div>
+                    <div class="col-8">
+                        <div class="input-group">
+                            {% render_field form.interface2 class="form-control form-fix-size" placeholder="Interface" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form.mode2 class="form-control form-fix-size" placeholder="Switch mode" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form.vlan2 class="form-control form-fix-size" placeholder="Vlan" required='required' %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row spacer">
+
+                    <div class="col-2">
+                        <label>Add Vlan interface</label>
+                    </div>
+                    <div class="col-8">
+                        <div class="input-group">
+                            {% render_field form.interface3 class="form-control form-fix-size" placeholder="Interface" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form.mode3 class="form-control form-fix-size" placeholder="Switch mode" required='required' %}
+                            <span class="mr-1"></span>
+                            {% render_field form.vlan3 class="form-control form-fix-size" placeholder="Vlan" required='required' %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+             <div class="form-group text-center">
+             <button class="btn btn-outline-info" type="submit">Create</button>
+            </div>
+         </form>
+        
+        
+        
+        </div>
+          </div>
+    </div>
+    </div>
+  </section>
+      {% endblock content %}

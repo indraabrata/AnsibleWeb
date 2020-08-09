@@ -4,7 +4,7 @@ from . import views
 from users import views as user_views
 from django.conf import settings
 from django.conf.urls.static import static 
-from .view import intervlan, dhcp, ospf, ipstatic, vlan, device, autoconfig, backup, restore
+from .view import intervlan, dhcp, ospf, ipstatic, vlan, device, autoconfig, backup, restore, switch
 
 urlpatterns = [
     path('', views.home, name='Ansible-home'),
@@ -16,6 +16,7 @@ urlpatterns = [
     path('group/', views.addgroup, name='group-create'),
     path('host/', device.addhost, name='host-create'),
     path('vlan/', vlan.conf_vlan, name='vlan'),
+    path('serviceswitch/', switch.serviceswitch, name='serviceswitch'),
     path('ipstatic/', ipstatic.ipstatic, name='ipstatic'),
     path('ospf/', ospf.ospf_all, name='ospf'),
     path('ivlan/', intervlan.ivlan_all, name='ivlan'),

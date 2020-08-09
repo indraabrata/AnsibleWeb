@@ -277,13 +277,52 @@ class ios_switch(models.Model):
     mode2 = models.CharField(max_length=100, default="")
     vlan2 = models.CharField(max_length=100, default="")
 
+    interface3 = models.CharField(max_length=100, default="")
+    mode3 = models.CharField(max_length=100, default="")
+    vlan3 = models.CharField(max_length=100, default="")
+
     gateway = models.CharField(max_length=100, default="")
 
     port_id = models.ForeignKey(devices, on_delete=models.CASCADE)
 
+
+
+class switchservice(models.Model):
+    namefile = models.CharField(max_length=100, default="")
+    vlan_id = models.CharField(max_length=100, default="")
+    vlan_name = models.CharField(max_length=100, default="")
+
+    vlan_id2 = models.CharField(max_length=100, default="")
+    vlan_name2 = models.CharField(max_length=100, default="")
+
+    vlan_id3 = models.CharField(max_length=100, default="")
+    vlan_name3 = models.CharField(max_length=100, default="")
+
+    interface = models.CharField(max_length=100, default="")
+    mode = models.CharField(max_length=100, default="")
+    vlan = models.CharField(max_length=100, default="")
+
+    interface2 = models.CharField(max_length=100, default="")
+    mode2 = models.CharField(max_length=100, default="")
+    vlan2 = models.CharField(max_length=100, default="")
+
+    interface3 = models.CharField(max_length=100, default="")
+    mode3 = models.CharField(max_length=100, default="")
+    vlan3 = models.CharField(max_length=100, default="")
+
+    def __str__(self):
+        return self.namefile
+
 class ios_switch_form(forms.Form):
     name = forms.CharField()
     mac = forms.CharField()
+    form = forms.ModelChoiceField(queryset=switchservice.objects.all(), to_field_name="namefile")
+    gateway = forms.CharField()
+
+
+
+class formswitch(forms.Form):
+    namefile = forms.CharField()
     vlan_id = forms.CharField()
     vlan_name = forms.CharField()
 
@@ -301,7 +340,10 @@ class ios_switch_form(forms.Form):
     mode2 = forms.CharField()
     vlan2 = forms.CharField()
 
-    gateway = forms.CharField()
+    interface3 = forms.CharField()
+    mode3 = forms.CharField()
+    vlan3 = forms.CharField()
+
 
 class ce_switch(models.Model):
     name = models.CharField(max_length=100, default="")

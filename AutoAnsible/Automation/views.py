@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from users.forms import UserRegisterForm
 from django.contrib.auth.decorators import login_required
-from .models import mac_os, PostInventoryGroup, PostInventoryHost ,PostPlayBookForm, TaskForm, log, group, addinfodevice , ios_router, preconfdevice, arp, ce_router_form, ce_router, kamusport, ios_switch, ios_switch_form, devices, iosrouter, ce_switch, ce_switch_form, routeros_router, routeros_router_form
+from .models import mac_os, switchservice, PostInventoryGroup, PostInventoryHost ,PostPlayBookForm, TaskForm, log, group, addinfodevice , ios_router, preconfdevice, arp, ce_router_form, ce_router, kamusport, ios_switch, ios_switch_form, devices, iosrouter, ce_switch, ce_switch_form, routeros_router, routeros_router_form
 from .forms import ivlanset, hostnamecisco, dhcpset, ospfset, ip_staticset, vlanint, vlan_cisco, ospf_cisco, ciscobackup, ciscorestore, hostnamehuawei, ospf_huawei, intervlan_huawei, backupall, hostnamemikrotik, ipaddmikrotik, ospf_mikrotik, mikrotikbackup, huaweirestore, mikrotikrestore, autoconfig , vlanset, host_all
 from django.contrib import messages
 from django.db.models.fields.related import ManyToManyField
@@ -308,27 +308,34 @@ def prekonfig(request, pk):
                 if form_ios.is_valid():
                     data = request.POST
                     datamac = data['mac']
+                    config = data['form']
                     macc = macdata(datamac)
                     print(request.POST)
+                    conf = switchservice.objects.get(namefile=config)
+                    print(conf)
                     coba = ios_switch(name=data['name'],
                                     hostname=data['name'],
 
-                                    vlan_id=data['vlan_id'],
-                                    vlan_name=data['vlan_name'],
+                                    vlan_id=conf.vlan_id,
+                                    vlan_name=conf.vlan_name,
 
-                                    vlan_id2=data['vlan_id2'],
-                                    vlan_name2=data['vlan_name2'],
+                                    vlan_id2=conf.vlan_id2,
+                                    vlan_name2=conf.vlan_name2,
 
-                                    vlan_id3=data['vlan_id3'],
-                                    vlan_name3=data['vlan_name3'],
+                                    vlan_id3=conf.vlan_id3,
+                                    vlan_name3=conf.vlan_name3,
 
-                                    interface=data['interface'],
-                                    mode=data['mode'],
-                                    vlan=data['vlan'],
+                                    interface=conf.interface,
+                                    mode=conf.mode,
+                                    vlan=conf.vlan,
 
-                                    interface2=data['interface2'],
-                                    mode2=data['mode2'],
-                                    vlan2=data['vlan2'],
+                                    interface2=conf.interface2,
+                                    mode2=conf.mode2,
+                                    vlan2=conf.vlan2,
+
+                                    interface3=conf.interface3,
+                                    mode3=conf.mode3,
+                                    vlan3=conf.vlan3,
 
                                     gateway=data['gateway'],
 
@@ -352,27 +359,35 @@ def prekonfig(request, pk):
                 if form_ios.is_valid():
                     data = request.POST
                     datamac = data['mac']
+                    config = data['form']
                     macc = macdata(datamac)
                     print(request.POST)
+                    conf = switchservice.objects.get(namefile=config)
+                    print(conf)
                     ios_switch.objects.filter(port_id=select).update(name=data['name'],
                                     hostname=data['name'],
 
-                                    vlan_id=data['vlan_id'],
-                                    vlan_name=data['vlan_name'],
+                                    vlan_id=conf.vlan_id,
+                                    vlan_name=conf.vlan_name,
 
-                                    vlan_id2=data['vlan_id2'],
-                                    vlan_name2=data['vlan_name2'],
+                                    vlan_id2=conf.vlan_id2,
+                                    vlan_name2=conf.vlan_name2,
 
-                                    vlan_id3=data['vlan_id3'],
-                                    vlan_name3=data['vlan_name3'],
+                                    vlan_id3=conf.vlan_id3,
+                                    vlan_name3=conf.vlan_name3,
 
-                                    interface=data['interface'],
-                                    mode=data['mode'],
-                                    vlan=data['vlan'],
+                                    interface=conf.interface,
+                                    mode=conf.mode,
+                                    vlan=conf.vlan,
 
-                                    interface2=data['interface2'],
-                                    mode2=data['mode2'],
-                                    vlan2=data['vlan2'],
+                                    interface2=conf.interface2,
+                                    mode2=conf.mode2,
+                                    vlan2=conf.vlan2,
+
+                                    interface3=conf.interface3,
+                                    mode3=conf.mode3,
+                                    vlan3=conf.vlan3,
+
                                     gateway=data['gateway'],
                                     port_id=select)
                     idd = select.id
