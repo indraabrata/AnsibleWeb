@@ -28,6 +28,7 @@ urlpatterns = [
     path('prenewdevice/<str:pk>/', views.prenewdevice, name='prenewdevice'),
     path('preconf/<str:pk>/', views.prekonfig, name='prekonfig'),
     path('infodevice/<str:pk>/', views.infodevice, name='info-device'),
+    path('infoconfig/<str:pk>/', views.infoconfig, name='info-config'),
     path('update_device/<str:pk>/', views.updatedevice, name='update-device'),
     path('delete_device/<int:id>/', views.deletedevice, name='delete-device'),
     path('log/', views.log_info, name='log-report'),

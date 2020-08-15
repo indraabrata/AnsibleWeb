@@ -111,7 +111,7 @@ def backup_act(target, akun,os):
             become_method='enable',
             gather_facts='no',
             vars=[
-                dict(ansible_command_timeout=120)
+                dict(ansible_command_timeout=50)
             ],
             tasks=[
                 dict(file=dict(path='./backup/{{inventory_hostname}}.backup', state='absent'))
@@ -131,16 +131,34 @@ def backup_act(target, akun,os):
                 dict(net_get=dict(src="./{{ inventory_hostname }}.backup", protocol='scp', dest='./backup/{{ inventory_hostname}}.backup'))
                 ]
         )
+        my_play3 = dict(
+            name="Backup",
+            hosts=target,
+            become='yes',
+            become_method='enable',
+            gather_facts='no',
+            vars=[
+                dict(ansible_command_timeout=120)
+            ],
+            tasks=[
+                dict(action=dict(module='routeros_command', commands='/export'), register='export'),
+                dict(action=dict(module='copy', content="{{ export.stdout|join('\n') }}", dest="./backup/{{ inventory_hostname }}.rsc"))
+                ]
+            )
         result = execute(my_play)
         result2 = execute(my_play2)
+        result3 = execute(my_play3)
         kondisi = result2.stats
         kond = kondisi['hosts'][0]['status']
         print(kond)
+        print(json.dumps(result.stats, indent=4))
+        print(json.dumps(result2.stats, indent=4))
+        print(json.dumps(result3.stats, indent=4))
         if kond == 'ok':
             logs = log.objects.filter(account=akun, targetss=target, action="Backup Configuration "+target, status='PENDING').update(status='Success')
         else:
             fail = result.results
-            err = fail['failed'][0]['tasks'][0]['result']['msg'][0]
+            err = fail['failed'][0]['tasks'][0]['result']['msg']
             logs = log.objects.filter(account=akun, targetss=target, action="Backup Configuration "+target, status='PENDING').update(status='Failed', messages=err)
             print(f'{err}')
 

@@ -1,0 +1,37 @@
+{% extends "ansibleweb/base.html" %}
+{% block content %}
+    {% load crispy_forms_tags %}
+    {% load widget_tweaks %}
+    <section class="dashboard-counts section-padding">
+        <div class="container fluid dashboard-content">
+            <div class="row">
+                <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+                  <div class="page-header">
+                    <h2 class="pageheader-title">Configuration Information</h2>
+                    <p class="pageheader-text">display all configuration on network device</p>
+                  </div>
+                </div>
+              </div>
+          <div class="row d-flex align-items-md-stretch">
+            <div class="col-lg-6">
+           <div class="card">
+          <form method="GET" class="text-left">
+               {% csrf_token %}
+               <div class="card-body">
+                <div class="row form-row spacer">
+                    <div class="col-12">
+                        <div class="input-group">
+                          {{ file_content | linebreaks}}}
+                          <span class="mr-2"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+         </form>
+        
+        </div>
+          </div>
+    </div>
+    </div>
+  </section>
+      {% endblock content %}

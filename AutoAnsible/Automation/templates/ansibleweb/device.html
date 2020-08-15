@@ -25,6 +25,7 @@
                                     <th>Update</th>
                                     <th>Port Info</th>
                                     <th>Remove</th>
+                                    <th>Config</th>
                                 </tr>
                                 {% for device in all_device %}
                                         <tr>
@@ -38,7 +39,12 @@
                                                     <button type="submit" class="btn-sm btn-danger"> Delete
                                                     </button>
                                             </form>
-
+                                            </td>
+                                            <td><form action="{% url 'info-config' device.id %}" method="post" class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn-sm btn-info"> Config
+                                                </button>
+                                            </form>
                                             </td>
                                         </tr> 
                                     {% endfor %}

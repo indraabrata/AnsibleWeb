@@ -754,9 +754,35 @@ def ciscorouter(cons, de_type, add_ip_ok, mac_matching, akun, hos):
     kond = kondisi['hosts'][0]['status']
     print(result.results)
     if kond == 'ok':
-        print('Success autoconfig')
-        devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
-        logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Success')
+        getconfig = dict(
+            name="Backup",
+            hosts=cons,
+            become='yes',
+            become_method='enable',
+            gather_facts='no',
+            vars=[
+                dict(ansible_command_timeout=120)
+            ],
+            tasks=[
+                dict(action=dict(module='ios_config', backup='yes'), register='output'),
+                dict(action=dict(module='copy', src="{{output.backup_path}}", dest="./backup/{{inventory_hostname}}.config")),
+                dict(action=dict(module='lineinfile', path="./backup/{{inventory_hostname}}.config", line="Building configuration...", state='absent')),
+                dict(action=dict(module='lineinfile', path="./backup/{{inventory_hostname}}.config", regexp="Current configuration.*", state='absent'))
+                ]
+        )
+        hasil = execute(getconfig)
+        cond = hasil.stats
+        conditions = cond['hosts'][0]['status']
+        if conditions == 'ok':
+            print("backup config berhasil")
+            print('Success autoconfig')
+            devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
+            logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Success')
+        else:
+            fail = hasil.results
+            err = fail['failed'][0]['tasks'][0]['result']['msg']
+            logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Failed', messages=err)
+            print(f'{err}')	
     else:
         print('Failed autoconfig')
         fail = result.results
@@ -911,9 +937,33 @@ def huaweiswitch(cons, add_ip_ok, de_type, mac_matching, akun, hos):
     kondisi = result.stats
     kond = kondisi['hosts'][0]['status']
     if kond == 'ok':
-        print('Success autoconfig')
-        devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
-        logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Success')
+        getconfig = dict(
+            name="Backup",
+            hosts=cons,
+            become='yes',
+            become_method='enable',
+            gather_facts='no',
+            vars=[
+                dict(ansible_command_timeout=120)
+            ],
+            tasks=[
+                dict(action=dict(module='ce_config', lines=['sysname {{ inventory_hostname }}'], backup='yes'), register='output'),
+                dict(action=dict(module='copy', src="{{output.backup_path}}", dest="./backup/{{inventory_hostname}}.cfg"))
+            ]
+        )
+        hasil = execute(getconfig)
+        cond = hasil.stats
+        conditions = cond['hosts'][0]['status']
+        if conditions == 'ok':
+            print("backup config berhasil")
+            print('Success autoconfig')
+            devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
+            logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Success')
+        else:
+            fail = hasil.results
+            err = fail['failed'][0]['tasks'][0]['result']['msg']
+            logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Failed', messages=err)
+            print(f'{err}')	
     else:
         print('Failed autoconfig')
         fail = result.results
@@ -968,9 +1018,62 @@ def mikrotikrouter(cons, de_type, add_ip_ok, mac_matching, akun, hos):
     kondisi = result.stats
     kond = kondisi['hosts'][0]['status']
     if kond == 'ok':
-        print('Success autoconfig')
-        devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
-        logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Success')
+        getconfig = dict(
+            name="Backup",
+            hosts=cons,
+            become='yes',
+            become_method='enable',
+            gather_facts='no',
+            vars=[
+                dict(ansible_command_timeout=120)
+            ],
+            tasks=[
+                dict(file=dict(path='./backup/{{inventory_hostname}}.backup', state='absent'))
+                ]
+            ) 
+        getconfig2 = dict(
+            name="Backup",
+            hosts=cons,
+            become='yes',
+            become_method='enable',
+            gather_facts='no',
+            vars=[
+                dict(ansible_command_timeout=120)
+            ],
+            tasks=[
+                dict(action=dict(module='routeros_command', commands='/system backup save name={{ inventory_hostname }} password={{ ansible_password }}')),
+                dict(net_get=dict(src="./{{ inventory_hostname }}.backup", protocol='scp', dest='./backup/{{ inventory_hostname}}.backup'))
+                ]
+            )
+        getconfig3 = dict(
+            name="Backup",
+            hosts=cons,
+            become='yes',
+            become_method='enable',
+            gather_facts='no',
+            vars=[
+                dict(ansible_command_timeout=120)
+            ],
+            tasks=[
+                dict(action=dict(module='routeros_command', commands='/export'), register='export'),
+                dict(action=dict(module='copy', content="{{ export.stdout|join('\n') }}", dest="./backup/{{ inventory_hostname }}.rsc"))
+                ]
+            )
+        hasil = execute(getconfig)
+        hasil2 = execute(getconfig2)
+        hasil3 = execute(getconfig3)
+        cond = hasil3.stats
+        conditions = cond['hosts'][0]['status']
+        if conditions == 'ok':
+            print("backup config berhasil")
+            print('Success autoconfig')
+            devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
+            logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Success')
+        else:
+            fail = hasil3.results
+            err = fail['failed'][0]['tasks'][0]['result']['msg']
+            logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Failed', messages=err)
+            print(f'{err}')
     else:
         print('Failed autoconfig')
         fail = result.results
@@ -1017,9 +1120,33 @@ def huaweirouter(cons, add_ip_ok, de_type, mac_matching, akun, hos):
     kondisi = result.stats
     kond = kondisi['hosts'][0]['status']
     if kond == 'ok':
-        print('Success autoconfig')
-        devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
-        logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Success')
+        getconfig = dict(
+            name="Backup",
+            hosts=cons,
+            become='yes',
+            become_method='enable',
+            gather_facts='no',
+            vars=[
+                dict(ansible_command_timeout=120)
+            ],
+            tasks=[
+                dict(action=dict(module='ce_config', lines=['sysname {{ inventory_hostname }}'], backup='yes'), register='output'),
+                dict(action=dict(module='copy', src="{{output.backup_path}}", dest="./backup/{{inventory_hostname}}.cfg"))
+            ]
+        )
+        hasil = execute(getconfig)
+        cond = hasil.stats
+        conditions = cond['hosts'][0]['status']
+        if conditions == 'ok':
+            print("backup config berhasil")
+            print('Success autoconfig')
+            devices.objects.filter(new_device_mac=mac_matching).update(stats='configured')
+            logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Success')
+        else:
+            fail = hasil.results
+            err = fail['failed'][0]['tasks'][0]['result']['msg']
+            logs = log.objects.filter(account=akun, targetss=hos.host, action='Auto Configuration', status='PENDING').update(status='Failed', messages=err)
+            print(f'{err}')	
     else:
         print('Failed autoconfig')
         fail = result.results

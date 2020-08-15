@@ -134,6 +134,50 @@ def deletedevice(request, id):
     logs.save()
     return redirect('device')
 
+def infoconfig(request, pk):
+    device = AnsibleNetworkHost.objects.get(id=pk)
+    target = device.host
+    os = device.group.ansible_network_os
+    if os == 'ios':
+        try :
+            f = open('./backup/'+target+'.config', 'r')
+            file_content = f.read()
+            f.close()
+            context = {
+            'file_content': file_content
+            }
+            return render(request, 'ansibleweb/infoconfig.html', context)
+        except FileNotFoundError:
+            print("Wrong file")
+            messages.warning(request, f'File config Not Found!')
+            return redirect('device')
+    elif os == 'ce':
+        try:
+            f = open('./backup/'+target+'.cfg', 'r')
+            file_content = f.read()
+            f.close()
+            context = {
+                'file_content': file_content
+            }
+            return render(request, 'ansibleweb/infoconfig.html', context)
+        except FileNotFoundError:
+            print("FIle not found")
+            messages.warning(request, f'File config Not Found!')
+            return redirect('device')
+    elif os == 'routeros':
+        try:
+            f = open('./backup/'+target+'.rsc', 'r')
+            file_content = f.read()
+            f.close()
+            context = {
+                'file_content': file_content
+            }
+            return render(request, 'ansibleweb/infoconfig.html', context)
+        except FileNotFoundError:
+            messages.warning(request, f'File config Not Found!')
+            return redirect('device')
+
+
 @login_required
 def prenewdevice(request, pk):
     select = devices.objects.get(id=pk)
