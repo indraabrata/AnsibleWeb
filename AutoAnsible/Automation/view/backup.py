@@ -64,9 +64,9 @@ def backup_act(target, akun,os):
         )
         result = execute(my_play)
         kondisi = result.stats
-        kond = kondisi['hosts'][0]['status']
+        kond = kondisi['has_changed']
         print(kond)
-        if kond == 'ok':
+        if kond == 'true':
             logs = log.objects.filter(account=akun, targetss=target, action="Backup Configuration "+target, status='PENDING').update(status='Success')
         else:
             fail = result.results
@@ -92,10 +92,10 @@ def backup_act(target, akun,os):
             )
         result = execute(my_play)
         kondisi = result.stats
-        kond = kondisi['hosts'][0]['status']
+        kond = kondisi['has_changed']
         print(kond)
         print(result.results)
-        if kond == 'ok':
+        if kond == 'true':
             logs = log.objects.filter(account=akun, targetss=target, action="Backup Configuration "+target, status='PENDING').update(status='Success')
             print(logs)
         else:
@@ -149,15 +149,15 @@ def backup_act(target, akun,os):
         result2 = execute(my_play2)
         result3 = execute(my_play3)
         kondisi = result2.stats
-        kond = kondisi['hosts'][0]['status']
+        kond = kondisi['has_changed']
         print(kond)
         print(json.dumps(result.stats, indent=4))
         print(json.dumps(result2.stats, indent=4))
         print(json.dumps(result3.stats, indent=4))
-        if kond == 'ok':
+        if kond == 'true':
             logs = log.objects.filter(account=akun, targetss=target, action="Backup Configuration "+target, status='PENDING').update(status='Success')
         else:
-            fail = result.results
+            fail = result2.results
             err = fail['failed'][0]['tasks'][0]['result']['msg']
             logs = log.objects.filter(account=akun, targetss=target, action="Backup Configuration "+target, status='PENDING').update(status='Failed', messages=err)
             print(f'{err}')
