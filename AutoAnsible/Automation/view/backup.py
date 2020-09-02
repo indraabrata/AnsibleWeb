@@ -25,6 +25,7 @@ def backup_all(request):
             print(request.POST)
             data = request.POST
             akun = request.user
+            messages.success(request, f'Starting Backup Configuration!')
             for backups in backup:    
                 tujuan = backups.cleaned_data.get('hosts')  
                 target = tujuan.name         
@@ -34,7 +35,6 @@ def backup_all(request):
                 t1.start()
                 logs = log(account=akun, targetss=target, action="Backup Configuration "+target, status="PENDING", time=datetime.now(), messages="No Error")
                 logs.save()
-                messages.success(request, f'Starting Backup Configuration!')
             context = {
                 'backup': backup
             }
@@ -66,7 +66,7 @@ def backup_act(target, akun,os):
         kondisi = result.stats
         kond = kondisi['has_changed']
         print(kond)
-        if kond == 'true':
+        if kond == True:
             logs = log.objects.filter(account=akun, targetss=target, action="Backup Configuration "+target, status='PENDING').update(status='Success')
         else:
             fail = result.results
@@ -95,7 +95,7 @@ def backup_act(target, akun,os):
         kond = kondisi['has_changed']
         print(kond)
         print(result.results)
-        if kond == 'true':
+        if kond == True:
             logs = log.objects.filter(account=akun, targetss=target, action="Backup Configuration "+target, status='PENDING').update(status='Success')
             print(logs)
         else:
@@ -154,7 +154,7 @@ def backup_act(target, akun,os):
         print(json.dumps(result.stats, indent=4))
         print(json.dumps(result2.stats, indent=4))
         print(json.dumps(result3.stats, indent=4))
-        if kond == 'true':
+        if kond == True:
             logs = log.objects.filter(account=akun, targetss=target, action="Backup Configuration "+target, status='PENDING').update(status='Success')
         else:
             fail = result2.results

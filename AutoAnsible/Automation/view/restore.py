@@ -50,11 +50,10 @@ def restorecisco(request):
                     hos = kond['hosts'][0]['host']
                     print(result.results)
                     if kondisi == 'ok':
-                        dataport = result.results                
-                        command = dataport['success'][0]['tasks'][0]['result']['commands'][0]
+                        dataport = result.results 
                         logs = log(account=akun, targetss=hos, action='Restore Config '+hos, status='Success', time=datetime.now(), messages='No Error')
                         logs.save()
-                        jadi = "Device   :"+hos+"    Commands:"+command+"    Changed: True"
+                        jadi = "Device   :"+hos+"    Commands:Berhasil Restore    Changed: True"
                         output.append(jadi)      
                     else:
                         dataport = result.results
@@ -206,8 +205,8 @@ def restorecisco(request):
                         #command = dataport['success'][0]['tasks'][0]['result']['invocation']['module_args']['commands'][0]
                         logs = log(account=akun, targetss=hos, action='Restore Config '+hos, status='Success', time=datetime.now(), messages='No Error')
                         logs.save()
-                        #jadi = "Device   :"+hos+"    Commands:"+command+"    Changed: True"
-                        #output.append(jadi)      
+                        jadi = "Device   :"+hos+"    Commands:Berhasil Restore    Changed: True"
+                        output.append(jadi)      
                     else:
                         dataport = result.results
                         err = dataport['failed'][0]['tasks'][0]['result']['msg']

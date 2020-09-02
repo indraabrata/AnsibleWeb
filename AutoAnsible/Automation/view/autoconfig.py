@@ -570,7 +570,7 @@ def autoconf(device, akun):
                         print(add_ip_ok)
                         precon = devices.objects.filter(device_id=device, stats='Booked', new_device_mac=mac_matching).values_list('preconf')
                         cons = precon[0][0]
-                        print(cons)
+                        print("Nama Device: "+cons)
                         print(t_os)
                         print(matching)
                         print(dtype)
@@ -588,7 +588,7 @@ def autoconf(device, akun):
                         elif Huawei_os == True and dtype == 'switch' and matching > 0:
                             huaweiswitch(cons, add_ip_ok, de_type, mac_matching, akun, hos)
                         elif Cisco_os == True and dtype == 'switch' and matching > 0:
-                            ciscoswitch(cons, de_type, add_ip_ok, mac_matching, akun, hos)
+                            ciscoswitch(cons, add_ip_ok, de_type, mac_matching, akun, hos)
                         elif Mikrotik_os == True and dtype == 'router' and matching > 0:
                             mikrotikrouter(cons, de_type, add_ip_ok, mac_matching, akun, hos)
                         else:
@@ -688,6 +688,7 @@ def autoconf(device, akun):
                         add_ip = arp.objects.filter(mac=findmac).values_list('ipadd')
                         add_ip_ok = add_ip[0][0]
                         print(add_ip_ok)
+                        print(portarpp)
                         precon = devices.objects.filter(device_id=device, stats='Booked', port=portarpp).values_list('preconf')
                         cons = precon[0][0]
                         print(cons)
@@ -849,7 +850,7 @@ def ciscoswitch(cons, add_ip_ok, de_type, mac_matching, akun, hos):
             print("backup config berhasil")
             fin = open("./backup/"+cons+".config", "rt")
             data = fin.read()
-            data = data.replace(' ip address dhcp\n!', ' ip address '+add_ip_ok+' 255.255.255.0\n!\nip default-gateway '+conf.gateway+'\n!')
+            data = data.replace(' ip address dhcp\n no ip route-cache\n', ' ip address '+add_ip_ok+' 255.255.255.0\n!\nip default-gateway '+conf.gateway+'\n')
             fin.close()
             fin = open("./backup/"+cons+".config", "wt")
             cek = fin.write(data)
