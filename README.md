@@ -37,13 +37,16 @@ ___
 #### 2. Device List
 ![Image of Device List](https://github.com/indraabrata/AnsibleWeb/blob/master/AutoAnsible/media/gitpic/Device%20list.png)
 
-#### 3. Backup
+#### 3. Configuration Static
+![Image of Configuration](https://github.com/indraabrata/AnsibleWeb/blob/master/AutoAnsible/media/gitpic/configstatic.png)
+
+#### 4. Backup
 ![Image of Backup](https://github.com/indraabrata/AnsibleWeb/blob/master/AutoAnsible/media/gitpic/backup.png)
 
-#### 4. Restore
+#### 5. Restore
 ![Image of Restore](https://github.com/indraabrata/AnsibleWeb/blob/master/AutoAnsible/media/gitpic/Restore.png)
 
-#### 5. Autoconfiguration
+#### 6. Autoconfiguration
 ![Image of Autoconfiguration](https://github.com/indraabrata/AnsibleWeb/blob/master/AutoAnsible/media/gitpic/autoconf.png)
 
 ___
