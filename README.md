@@ -32,12 +32,18 @@ ____
 ___
 
 #### 1. Main Page
-![Image of Home](https://github.com/indraabrata/AnsibleWeb/blob/master/AutoAnsible/media/gitpic/Device%20list.png)
+![Image of Home](https://github.com/indraabrata/AnsibleWeb/blob/master/AutoAnsible/media/gitpic/Home.png)
+
+#### 2. Device List
+![Image of Device List](https://github.com/indraabrata/AnsibleWeb/blob/master/AutoAnsible/media/gitpic/Device%20list.png)
 
 #### 3. Backup
-![Image of Backup]
+![Image of Backup](https://github.com/indraabrata/AnsibleWeb/blob/master/AutoAnsible/media/gitpic/backup.png)
 
 #### 4. Restore
-![Image of Restore]
+![Image of Restore](https://github.com/indraabrata/AnsibleWeb/blob/master/AutoAnsible/media/gitpic/Restore.png)
+
+#### 5. Autoconfiguration
+![Image of Autoconfiguration](https://github.com/indraabrata/AnsibleWeb/blob/master/AutoAnsible/media/gitpic/autoconf.png)
 
 ___
