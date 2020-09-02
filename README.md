@@ -7,3 +7,37 @@ Fitur AnsibleAutomation:
 - **Device List**: menampilkan informasi perangkat yang ada pada jaringan
 - **Backup**: Backup konfigurasi perangkat
 - **Restore**: Restore konfigurasi perangkat
+
+____
+
+# Instalasi
+## Requirement
+    python 3.6+
+    virtualenv
+
+## Quick start
+    sudo su
+    git clone https://github.com/indraabrata/AnsibleWeb.git
+    virtualenv -p python3 env
+    source env/bin/activate
+    pip3 install -r requirements.txt
+    cd AutoAnsible
+    python manage.py runserver 0.0.0.0:80
+    akses via browser <ip:80>
+
+## Readme
+    Pastikan server dapat terhubung ke perangkat router dan switch yang dituju (cisco, huawei, dan mikoritk)
+    perangkat sudah terkonfigurasi SSH, IP , dan SCP
+
+___
+
+#### 1. Main Page
+![Image of Home](https://drive.google.com/file/d/1MTRWYfjKqz6K7xRHKw53y07HkK2luwV8/view?usp=sharing)
+
+#### 3. Backup
+![Image of Backup]
+
+#### 4. Restore
+![Image of Restore]
+
+___
