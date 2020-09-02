@@ -32,7 +32,7 @@ ____
 ___
 
 #### 1. Main Page
-![Image of Home](https://drive.google.com/file/d/1MTRWYfjKqz6K7xRHKw53y07HkK2luwV8/view?usp=sharing)
+![Image of Home](https://github.com/indraabrata/AnsibleWeb/blob/master/AutoAnsible/media/gitpic/Device%20list.png)
 
 #### 3. Backup
 ![Image of Backup]
