@@ -24,7 +24,7 @@ kombu==4.6.11
 lxml==4.5.0
 MarkupSafe==1.1.1
 ncclient==0.6.7
-paramiko==2.7.1
+paramiko==2.10.1
 Pillow==7.0.0
 pkg-resources==0.0.0
 pycodestyle==2.5.0
